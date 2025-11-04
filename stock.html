@@ -1,0 +1,1322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>College Asset Management Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+        body { background-color: #f8fafc; font-family: 'Inter', sans-serif; }
+        .view { display: none; animation: fadeIn 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94); }
+        .view.active { display: block; }
+        .card-clean { transition: all 0.2s; box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px 0 rgba(0, 0, 0, 0.02); }
+        .card-clean:hover { box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.06); transform: translateY(-2px); }
+        .chart-container { position: relative; width: 100%; max-width: 900px; margin-left: auto; margin-right: auto; height: 350px; max-height: 45vh; }
+        @media (min-width: 768px) { .chart-container { height: 400px; } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+        .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 50; animation: fadeIn 0.3s; }
+        .modal-content { background: white; padding: 2.5rem; border-radius: 0.75rem; width: 95%; max-width: 700px; transform: scale(0.9); animation: zoomIn 0.3s forwards; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4); }
+        @keyframes zoomIn { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        .table-row-clickable { cursor: pointer; }
+    </style>
+</head>
+<body class="text-slate-800">
+
+    <div id="login-modal" class="modal-overlay">
+        <div class="modal-content max-w-sm p-8 text-center">
+            <h3 class="text-3xl font-bold text-slate-900 mb-6">System Access</h3>
+            <p class="text-slate-600 mb-6">Enter your credentials to continue.</p>
+            <form id="login-form" class="space-y-4">
+                <div>
+                    <input type="text" id="login-username" placeholder="Username (e.g., admin, cse, civ)" class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-teal-500 focus:border-teal-500 transition" required>
+                </div>
+                <div>
+                    <input type="password" id="login-password" placeholder="Password" class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-teal-500 focus:border-teal-500 transition" required>
+                </div>
+                <button type="submit" class="w-full bg-teal-600 text-white font-semibold py-3 px-6 rounded-lg shadow-lg shadow-teal-500/30 hover:bg-teal-700 transition transform hover:scale-[1.03]">
+                    Secure Login
+                </button>
+                <div id="login-error" class="text-red-500 text-sm mt-2" style="display: none;">Invalid credentials. Please try again.</div>
+            </form>
+            <p class="mt-6 text-sm text-slate-500">
+                <span class="font-bold">Admin:</span> admin/password<br>
+                <span class="font-bold">Users:</span> cse/password, civ/password, etc.
+            </p>
+        </div>
+    </div>
+
+    <div id="app-container" class="max-w-7xl mx-auto p-4 sm:p-8 lg:p-12 hidden">
+        <header class="mb-12 pb-4 border-b border-slate-200 flex justify-between items-center">
+            <div>
+                <h1 class="text-5xl font-extrabold text-slate-900 tracking-tight">Asset Stock Management</h1>
+                <p id="breadcrumb" class="text-slate-500 font-medium mt-3 text-lg">Centralized oversight for campus inventory.</p>
+            </div>
+            <div id="user-info" class="flex items-center space-x-4">
+                 <div id="role-display" class="px-4 py-2 bg-slate-100 rounded-full text-sm font-semibold">
+                    Logged in as: <span class="text-teal-600">N/A</span>
+                </div>
+                <button id="logout-btn" class="bg-slate-600 text-white font-semibold py-2 px-4 rounded-full hover:bg-slate-700 transition text-sm">Logout</button>
+            </div>
+        </header>
+
+        <main>
+            <section id="user-dashboard-view" class="view">
+                <div class="mb-10">
+                    <h2 id="user-dashboard-title" class="text-3xl font-bold text-slate-800">Department Dashboard</h2>
+                    <p class="text-slate-600 mt-2">Please select an option to continue.</p>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <button id="go-to-inventory-btn" class="bg-white p-8 rounded-lg card-clean border hover:border-teal-500 cursor-pointer text-center flex flex-col items-center justify-center">
+                        <span class="text-5xl mb-4">🗃️</span>
+                        <h3 class="text-xl font-bold text-slate-900">View Inventory</h3>
+                        <p class="text-sm text-slate-500 mt-1">Browse and manage assets</p>
+                    </button>
+                    <button id="user-requests-btn" class="bg-white p-8 rounded-lg card-clean border hover:border-teal-500 cursor-pointer text-center flex flex-col items-center justify-center">
+                         <span class="text-5xl mb-4">📊</span>
+                        <h3 class="text-xl font-bold text-slate-900">View Requests</h3>
+                        <p class="text-sm text-slate-500 mt-1">Check the status of your item requests</p>
+                    </button>
+                    <button id="user-indent-btn" class="bg-white p-8 rounded-lg card-clean border hover:border-teal-500 cursor-pointer text-center flex flex-col items-center justify-center">
+                         <span class="text-5xl mb-4">📜</span>
+                        <h3 class="text-xl font-bold text-slate-900">Create Indent</h3>
+                        <p class="text-sm text-slate-500 mt-1">Submit a formal indent request</p>
+                    </button>
+                </div>
+            </section>
+
+            <section id="departments-view" class="view">
+                <div class="mb-10">
+                    <h2 class="text-3xl font-bold text-slate-800">Select Departmental Inventory</h2>
+                    <p class="text-slate-600 mt-2">Choose a department to begin your analysis.</p>
+                </div>
+                <div id="admin-dashboard-buttons" class="mb-10 p-4 bg-slate-100 rounded-lg" style="display: none;">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <button id="admin-assign-btn" class="bg-blue-500 text-white font-semibold py-3 px-4 rounded-lg hover:bg-blue-600 transition">Assign Items</button>
+                        <button id="admin-indents-btn" class="bg-indigo-500 text-white font-semibold py-3 px-4 rounded-lg hover:bg-indigo-600 transition">Manage Indents</button>
+                    </div>
+                </div>
+                <div id="departments-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6"></div>
+            </section>
+
+            <section id="indent-options-view" class="view">
+                <div class="mb-8">
+                    <button id="back-from-indent-options" class="text-base font-semibold text-teal-600 hover:text-teal-800 transition flex items-center mb-6">
+                        <span class="mr-1 text-xl">←</span> Back to Dashboard
+                    </button>
+                    <h2 class="text-4xl font-extrabold text-slate-900">Indent Management</h2>
+                    <p class="text-slate-600 mt-2">Create a new indent form or check the status of existing indents.</p>
+                </div>
+                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <button id="go-to-indent-form-btn" class="bg-white p-8 rounded-lg card-clean border hover:border-teal-500 cursor-pointer text-center flex flex-col items-center justify-center">
+                        <span class="text-5xl mb-4">✍️</span>
+                        <h3 class="text-xl font-bold text-slate-900">Create New Indent Form</h3>
+                        <p class="text-sm text-slate-500 mt-1">Fill out and submit a new list of required items.</p>
+                    </button>
+                    <button id="go-to-indent-status-btn" class="bg-white p-8 rounded-lg card-clean border hover:border-teal-500 cursor-pointer text-center flex flex-col items-center justify-center">
+                        <span class="text-5xl mb-4">📋</span>
+                        <h3 class="text-xl font-bold text-slate-900">View Indent Status</h3>
+                        <p class="text-sm text-slate-500 mt-1">Check the approval status of your submitted indents.</p>
+                    </button>
+                 </div>
+            </section>
+
+            <section id="indent-form-view" class="view">
+                 <div class="mb-8">
+                    <button id="back-from-indent-form" class="text-base font-semibold text-teal-600 hover:text-teal-800 transition flex items-center mb-6">
+                        <span class="mr-1 text-xl">←</span> Back
+                    </button>
+                </div>
+                <div class="bg-white p-8 rounded-lg card-clean border">
+                    <div class="text-center mb-8">
+                        <h2 class="text-2xl font-bold text-slate-800">PRAGATI ENGINEERING COLLEGE</h2>
+                        <p class="text-sm text-slate-600">(AUTONOMOUS)</p>
+                        <p class="text-xs text-slate-500"># 1-378, ADB Road, SURAMPALEM - 533437, E.G.Dist., A.P.</p>
+                        <h3 class="text-xl font-bold text-slate-800 mt-4 underline underline-offset-4">INDENT</h3>
+                    </div>
+                    <form id="indent-form">
+                        <div class="grid grid-cols-3 gap-4 mb-4 text-sm">
+                            <div><span class="font-semibold">Name of the Department:</span> <span id="indent-dept-name"></span></div>
+                            <div><span class="font-semibold">No.:</span> <span id="indent-no"></span></div>
+                            <div><span class="font-semibold">Date:</span> <span id="indent-date"></span></div>
+                        </div>
+                        <div class="border rounded-lg overflow-hidden">
+                            <table class="min-w-full">
+                                <thead class="bg-slate-100">
+                                    <tr>
+                                        <th class="px-4 py-2 text-left text-xs font-semibold uppercase w-16">S.No</th>
+                                        <th class="px-4 py-2 text-left text-xs font-semibold uppercase">Particulars</th>
+                                        <th class="px-4 py-2 text-left text-xs font-semibold uppercase w-32">Quantity</th>
+                                        <th class="px-4 py-2 text-center text-xs font-semibold uppercase w-24">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="indent-items-table" class="divide-y divide-slate-200"></tbody>
+                            </table>
+                        </div>
+                         <div class="grid grid-cols-3 gap-6 mt-6 pt-4 border-t">
+                             <div>
+                                <label for="indent-ordered-by" class="block text-sm font-medium text-slate-700">Ordered by:</label>
+                                <input type="text" id="indent-ordered-by" required class="w-full mt-1 p-2 border rounded-md">
+                             </div>
+                              <div>
+                                <label class="block text-sm font-medium text-slate-500">Bill No.:</label>
+                                <p class="mt-1 p-2 text-slate-500">(Admin Entry)</p>
+                             </div>
+                              <div>
+                                <label class="block text-sm font-medium text-slate-500">Passed by:</label>
+                                <p class="mt-1 p-2 text-slate-500">(Admin Entry)</p>
+                             </div>
+                        </div>
+                        <div class="flex justify-between items-center mt-8">
+                             <button type="button" id="add-indent-row-btn" class="bg-gray-200 text-gray-700 font-semibold py-2 px-4 rounded-lg hover:bg-gray-300 transition">➕ Add Row</button>
+                             <button type="submit" class="bg-teal-600 text-white font-semibold py-3 px-8 rounded-lg shadow-lg hover:bg-teal-700 transition">Submit Indent</button>
+                        </div>
+                    </form>
+                </div>
+            </section>
+
+            <section id="indent-status-view" class="view">
+                 <div class="mb-8">
+                    <button id="back-from-indent-status" class="text-base font-semibold text-teal-600 hover:text-teal-800 transition flex items-center mb-6">
+                        <span class="mr-1 text-xl">←</span> Back
+                    </button>
+                    <h2 class="text-4xl font-extrabold text-slate-900">Indent Status & Management</h2>
+                </div>
+                <div id="indent-history-admin-section" style="display: none;">
+                    <h3 class="text-3xl font-bold text-slate-800 mb-6">Indent History</h3>
+                     <div class="bg-white rounded-lg card-clean border overflow-x-auto mb-12">
+                        <table class="min-w-full divide-y">
+                            <thead class="bg-slate-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Date</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Indent No.</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Department</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Items</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="indent-history-table" class="bg-white divide-y divide-slate-100"></tbody>
+                        </table>
+                    </div>
+                </div>
+                <div>
+                    <h3 id="pending-indents-title" class="text-3xl font-bold text-slate-800 mb-6">My Indent Status</h3>
+                    <div class="bg-white rounded-lg card-clean border overflow-x-auto">
+                        <table class="min-w-full divide-y">
+                            <thead class="bg-slate-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Date</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Indent No.</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Department</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Items</th>
+                                    <th id="indents-status-header" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="pending-indents-table" class="bg-white divide-y divide-slate-100"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+            
+            <section id="indent-review-view" class="view">
+                <div class="mb-8">
+                    <button id="back-from-indent-review" class="text-base font-semibold text-teal-600 hover:text-teal-800 transition flex items-center mb-6">
+                        <span class="mr-1 text-xl">←</span> Back to Indent List
+                    </button>
+                    <h2 class="text-4xl font-extrabold text-slate-900">Review Indent</h2>
+                    <div class="flex space-x-8 mt-2 text-sm text-slate-600">
+                        <span><strong>Indent No:</strong> <span id="review-indent-no"></span></span>
+                        <span><strong>Department:</strong> <span id="review-indent-dept"></span></span>
+                        <span><strong>Date:</strong> <span id="review-indent-date"></span></span>
+                        <span><strong>Ordered By:</strong> <span id="review-indent-ordered"></span></span>
+                    </div>
+                </div>
+                <form id="indent-review-form">
+                    <input type="hidden" id="review-indent-id">
+                    <div class="bg-white rounded-lg card-clean border overflow-x-auto">
+                        <table class="min-w-full">
+                            <thead class="bg-slate-50">
+                                <tr>
+                                    <th class="px-4 py-2 text-left text-xs font-semibold uppercase w-16">S.No</th>
+                                    <th class="px-4 py-2 text-left text-xs font-semibold uppercase">Particulars</th>
+                                    <th class="px-4 py-2 text-left text-xs font-semibold uppercase w-32">Qty Requested</th>
+                                    <th class="px-4 py-2 text-left text-xs font-semibold uppercase w-32">Qty Approved</th>
+                                    <th class="px-4 py-2 text-left text-xs font-semibold uppercase w-48">Item Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="indent-review-items-table" class="divide-y divide-slate-200">
+                                </tbody>
+                        </table>
+                    </div>
+                    <div class="flex justify-end mt-8">
+                        <button type="submit" class="bg-teal-600 text-white font-semibold py-3 px-8 rounded-lg shadow-lg hover:bg-teal-700 transition">Process Indent</button>
+                    </div>
+                </form>
+            </section>
+
+            <section id="assign-view" class="view">
+                <div class="mb-8">
+                    <button id="back-from-assign" class="text-base font-semibold text-teal-600 hover:text-teal-800 transition flex items-center mb-6">
+                        <span class="mr-1 text-xl">←</span> Back to Dashboard
+                    </button>
+                    <h2 class="text-4xl font-extrabold text-slate-900">Assign / Request Item</h2>
+                    <p class="text-slate-600 mt-2">Log items that have been assigned to a person or location.</p>
+                </div>
+                <div class="bg-white p-6 rounded-lg card-clean border mb-12">
+                    <form id="assign-form" class="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
+                        <div id="assign-department-group" class="md:col-span-1">
+                            <label for="assign-department" class="block text-sm font-medium text-slate-700 mb-1">Department</label>
+                            <select id="assign-department" class="w-full px-4 py-3 border border-slate-300 rounded-lg"></select>
+                        </div>
+                        <div class="md:col-span-2">
+                            <label for="assign-item" class="block text-sm font-medium text-slate-700 mb-1">Item(s)</label>
+                            <select id="assign-item" required class="w-full px-4 py-3 border border-slate-300 rounded-lg">
+                                <option value="" disabled selected>Select an item</option>
+                                </select>
+                        </div>
+                        <div>
+                            <label for="assign-quantity" class="block text-sm font-medium text-slate-700 mb-1">Quantity</label>
+                            <input type="number" id="assign-quantity" min="1" required class="w-full px-4 py-3 border border-slate-300 rounded-lg">
+                        </div>
+                        <div>
+                           <button type="submit" class="w-full bg-teal-600 text-white font-semibold py-3 px-6 rounded-lg shadow-lg hover:bg-teal-700 transition">Submit</button>
+                        </div>
+                    </form>
+                </div>
+                <div>
+                    <h3 class="text-3xl font-bold text-slate-800 mb-6">Assignment History</h3>
+                    <div class="bg-white rounded-lg card-clean border overflow-x-auto">
+                        <table class="min-w-full divide-y">
+                            <thead class="bg-slate-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Date</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Department</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Item(s)</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Quantity</th>
+                                </tr>
+                            </thead>
+                            <tbody id="assignment-history-table" class="bg-white divide-y divide-slate-100"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+            
+            <section id="requests-view" class="view">
+                 <div class="mb-8">
+                    <button id="back-from-requests" class="text-base font-semibold text-teal-600 hover:text-teal-800 transition flex items-center mb-6">
+                        <span class="mr-1 text-xl">←</span> Back to Dashboard
+                    </button>
+                    <h2 class="text-4xl font-extrabold text-slate-900">Item Requests</h2>
+                </div>
+                <div id="request-history-admin-section">
+                    <h3 class="text-3xl font-bold text-slate-800 mb-6">Request History</h3>
+                     <div class="bg-white rounded-lg card-clean border overflow-x-auto mb-12">
+                        <table class="min-w-full divide-y">
+                            <thead class="bg-slate-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Date</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Department</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Item</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="request-history-table" class="bg-white divide-y divide-slate-100"></tbody>
+                        </table>
+                    </div>
+                </div>
+                <div>
+                    <h3 id="pending-requests-title" class="text-3xl font-bold text-slate-800 mb-6">Pending Requests</h3>
+                    <div class="bg-white rounded-lg card-clean border overflow-x-auto">
+                        <table class="min-w-full divide-y">
+                            <thead class="bg-slate-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Date</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Department</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Item</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Quantity</th>
+                                    <th id="requests-status-header" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="pending-requests-table" class="bg-white divide-y divide-slate-100"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <section id="department-detail-view" class="view">
+                <div class="mb-8">
+                    <button id="back-to-depts" class="text-base font-semibold text-teal-600 hover:text-teal-800 transition flex items-center mb-6">
+                        <span class="mr-1 text-xl">←</span> Back to All Departments
+                    </button>
+                    <button id="back-to-user-dashboard" class="text-base font-semibold text-teal-600 hover:text-teal-800 transition flex items-center mb-6">
+                        <span class="mr-1 text-xl">←</span> Back to Dashboard
+                    </button>
+                    <h2 id="dept-title" class="text-4xl font-extrabold text-slate-900">Department Inventory</h2>
+                    <p class="text-slate-600 mt-2">This dashboard summarizes asset distribution.</p>
+                </div>
+                <div class="bg-white p-6 rounded-lg card-clean mb-12 border border-slate-100">
+                    <h3 class="text-2xl font-semibold mb-6 text-slate-700">Asset Count by Category</h3>
+                    <div class="chart-container"><canvas id="department-chart"></canvas></div>
+                </div>
+                <h3 class="text-3xl font-bold text-slate-800 mb-6">Detailed Categories</h3>
+                <div id="categories-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4"></div>
+            </section>
+
+            <section id="category-detail-view" class="view">
+                <div class="mb-8">
+                    <button id="back-to-categories" class="text-base font-semibold text-teal-600 hover:text-teal-800 transition flex items-center mb-6">
+                        <span class="mr-1 text-xl">←</span> Back to Asset Categories
+                    </button>
+                    <h2 id="category-title" class="text-4xl font-extrabold text-slate-900">Asset Register</h2>
+                    <p class="text-slate-600 mt-2">View the detailed register for this asset category. <span id="admin-click-hint" class="text-sm text-amber-600 hidden font-medium">(Admin: Click a row to Edit)</span></p>
+                </div>
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-10">
+                    <div class="bg-white p-8 rounded-lg card-clean border border-slate-100 flex flex-col justify-center items-center text-center">
+                        <h3 class="text-xl font-medium text-slate-500">TOTAL ITEMS</h3>
+                        <p id="total-assets" class="text-7xl font-black text-teal-600 mt-2">0</p>
+                    </div>
+                    <div class="lg:col-span-2 bg-white p-6 rounded-lg card-clean border border-slate-100">
+                        <h3 id="category-chart-title" class="text-xl font-bold text-slate-700 mb-4">Condition Composition</h3>
+                        <div class="chart-container" style="height: 300px; max-height: 300px;"><canvas id="category-chart"></canvas></div>
+                    </div>
+                </div>
+                <div id="admin-actions-bar" class="flex justify-between items-center mb-6" style="display: none;">
+                    <div class="flex space-x-4">
+                        <button id="action-add-item" class="bg-green-600 text-white font-semibold py-2 px-6 rounded-full shadow-lg hover:bg-green-700 transition">➕ Add Item</button>
+                        <div class="relative inline-block text-left">
+                            <button id="bulk-action-btn" type="button" class="inline-flex justify-center w-full rounded-full border border-gray-300 px-6 py-2 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50" disabled>Bulk Actions (0)</button>
+                            <div id="bulk-action-dropdown" class="origin-top-right absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-white hidden">
+                                <a href="#" id="bulk-status-btn" class="text-gray-700 block px-4 py-2 text-sm hover:bg-slate-100">Change Status...</a>
+                                <a href="#" id="bulk-move-btn" class="text-gray-700 block px-4 py-2 text-sm hover:bg-slate-100">Move to Dept...</a>
+                                <a href="#" id="bulk-delete-btn" class="text-red-600 block px-4 py-2 text-sm hover:bg-red-50">Bulk Delete</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4 mb-6">
+                    <input type="text" id="search-input" placeholder="Search..." class="flex-grow px-4 py-3 border rounded-lg">
+                    <select id="status-filter" class="px-4 py-3 border rounded-lg w-full sm:w-1/3">
+                        <option value="All">Filter by Status: All</option>
+                        <option value="Working">Working</option><option value="Not Working">Not Working</option><option value="Under Repair">Under Repair</option><option value="Discarded">Discarded</option>
+                    </select>
+                </div>
+                <div class="bg-white rounded-lg card-clean border overflow-x-auto">
+                    <table class="min-w-full divide-y">
+                        <thead class="bg-slate-50">
+                            <tr>
+                                <th id="select-all-header" class="px-6 py-3 text-center text-xs font-medium uppercase tracking-wider" style="display:none;"><input type="checkbox" id="select-all-checkbox"></th>
+                                <th id="item-id-header" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Item ID</th>
+                                <th id="location-header" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Location</th>
+                                <th id="brand-model-header" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Brand/Model</th>
+                                <th id="item-name-header" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider" style="display:none;">Item Name/Type</th>
+                                <th id="condition-header" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Condition</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Quantity</th>
+                                <th id="action-header" class="px-6 py-3 text-center text-xs font-medium uppercase tracking-wider" style="display:none;">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="asset-table-body" class="bg-white divide-y"></tbody>
+                    </table>
+                </div>
+                <div class="flex justify-end space-x-4 mt-6">
+                    <button id="download-current-btn" class="bg-blue-600 text-white font-semibold py-2 px-6 rounded-full hover:bg-blue-700 transition">⬇️ Download Current View</button>
+                    <button id="download-all-btn" class="bg-gray-600 text-white font-semibold py-2 px-6 rounded-full hover:bg-gray-700 transition">⬇️ Download Full Inventory</button>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <div id="asset-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-content">
+            <h3 id="modal-title" class="text-2xl font-bold mb-6">Asset Record</h3>
+            <form id="asset-form" class="space-y-4">
+                <input type="hidden" id="modal-operation"><input type="hidden" id="asset-original-id">
+                <div id="delete-message" class="bg-red-50 border border-red-200 text-red-700 p-4 rounded-lg hidden">
+                    <p class="font-semibold">⚠️ Warning:</p><p>This action is permanent and cannot be undone.</p>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div><label for="asset-id" class="block text-sm font-medium">Asset ID</label><input type="text" id="asset-id" required class="w-full px-4 py-3 border rounded-lg"></div>
+                    <div id="asset-name-group" style="display:none;"><label for="asset-name" class="block text-sm font-medium">Item Name/Type</label><select id="asset-name" class="w-full px-4 py-3 border rounded-lg"></select></div>
+                    <div id="asset-location-group"><label for="asset-location" class="block text-sm font-medium">Location</label><input type="text" id="asset-location" class="w-full px-4 py-3 border rounded-lg"></div>
+                    <div id="asset-brand-group"><label for="asset-brand" class="block text-sm font-medium">Brand/Model</label><input type="text" id="asset-brand" class="w-full px-4 py-3 border rounded-lg"></div>
+                    <div id="asset-status-group"><label for="asset-status" class="block text-sm font-medium">Condition</label><select id="asset-status" class="w-full px-4 py-3 border rounded-lg"><option value="Working">Working</option><option value="Not Working">Not Working</option><option value="Under Repair">Under Repair</option><option value="Discarded">Discarded</option></select></div>
+                    <div><label for="asset-quantity" class="block text-sm font-medium">Quantity</label><input type="number" id="asset-quantity" min="1" required value="1" class="w-full px-4 py-3 border rounded-lg"></div>
+                </div>
+                <div class="flex justify-end space-x-4 pt-4">
+                    <button type="button" id="cancel-modal-btn" class="bg-slate-200 font-semibold py-3 px-6 rounded-lg">Cancel</button>
+                    <button type="submit" id="modal-submit-btn" class="bg-teal-600 text-white font-semibold py-3 px-6 rounded-lg">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <div id="bulk-action-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-content max-w-md">
+            <h3 id="bulk-modal-title" class="text-2xl font-bold mb-6">Bulk Action</h3>
+            <p class="mb-4">Applying action to <span id="bulk-item-count" class="font-bold text-teal-600">0</span> items.</p>
+            <form id="bulk-action-form" class="space-y-4">
+                <input type="hidden" id="bulk-operation-type">
+                <div id="bulk-status-group" style="display:none;"><label for="bulk-new-status" class="block text-sm font-medium">New Status</label><select id="bulk-new-status" required class="w-full px-4 py-3 border rounded-lg"><option value="Working">Working</option><option value="Not Working">Not Working</option><option value="Under Repair">Under Repair</option><option value="Discarded">Discarded</option></select></div>
+                <div id="bulk-move-group" style="display:none;"><label for="bulk-new-dept" class="block text-sm font-medium">New Department</label><select id="bulk-new-dept" required class="w-full px-4 py-3 border rounded-lg"></select></div>
+                <div id="bulk-delete-group" class="bg-red-50 border p-4 rounded-lg hidden"><p class="font-semibold">⚠️ This will permanently delete <span id="bulk-delete-count" class="font-bold">0</span> records.</p></div>
+                <div class="flex justify-end space-x-4 pt-4">
+                    <button type="button" id="bulk-cancel-btn" class="bg-slate-200 font-semibold py-3 px-6 rounded-lg">Cancel</button>
+                    <button type="submit" id="bulk-submit-btn" class="bg-teal-600 text-white font-semibold py-3 px-6 rounded-lg">Confirm</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <div id="toast" class="hidden fixed right-6 bottom-6 bg-slate-900 text-white px-4 py-2 rounded-lg shadow-lg" style="opacity:0; transition:opacity 0.35s ease;"></div>
+
+
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // --- DATA DEFINITIONS ---
+        const DEPARTMENTS = ['CIV', 'EEE', 'MEC', 'ECE', 'CSE', 'CAI', 'CSM', 'CSE DS', 'CS', 'IT'];
+        const RAW_CATEGORIES = ['PCs', 'Tables', 'Benches', 'Chairs', 'Boards', 'Projectors', 'ACs', 'Fans', 'Lights', 'CC Cameras', 'Keyboards', 'Mouse', 'Pens', 'Chalks', 'Pencils', 'Logbooks', 'Books', 'Papers'];
+        const GROUPED_CATEGORIES = ['PCs', 'Tables', 'Benches', 'Chairs', 'Boards', 'Projectors', 'ACs', 'Fans', 'Lights', 'CC Cameras', 'Keyboards', 'Mouse', 'Logbooks', 'Stationery Set'];
+        const CONSUMABLES = ['Pens', 'Chalks', 'Pencils', 'Books', 'Papers'];
+        const STATUS_OPTIONS = ['Working', 'Not Working', 'Under Repair', 'Discarded'];
+        const BRANDS = { PCs: ['HP', 'Dell', 'Asus', 'Lenovo'], Chairs: ['Godrej', 'Nilkamal', 'Local'], Projectors: ['Epson', 'BenQ'], Logbooks: ['Generic'], Pens: ['Generic', 'Pilot'], Chalks: ['Generic'], Pencils: ['Apsara', 'Natraj'], Books: ['Generic'], Papers: ['A4'] };
+        
+        let appData = {}, assignmentHistory = [], requestsLog = [], indentsLog = [];
+        let currentUserRole = null, departmentChart = null, categoryChart = null;
+        let state = { currentView: 'departments-view', department: null, category: null, searchText: '', filterStatus: 'All', selectedItems: new Set() };
+        
+        // --- DOM ELEMENTS ---
+        const loginModal = document.getElementById('login-modal');
+        const appContainer = document.getElementById('app-container');
+        const roleDisplay = document.getElementById('role-display').querySelector('span');
+        const breadcrumbEl = document.getElementById('breadcrumb');
+        const views = document.querySelectorAll('.view');
+        
+        // --- DATA PERSISTENCE ---
+        // *** THIS IS THE DATA FIX ***
+        const loadData = () => {
+            const storedData = localStorage.getItem('collegeAssetData');
+            const storedHistory = localStorage.getItem('assignmentHistory');
+            const storedRequests = localStorage.getItem('requestsLog');
+            const storedIndents = localStorage.getItem('indentsLog');
+            
+            if (storedData) { 
+                appData = JSON.parse(storedData); 
+            } else {
+                appData = generateMockData(); // Assign the return value
+            }
+            
+            assignmentHistory = JSON.parse(storedHistory) || [];
+            requestsLog = JSON.parse(storedRequests) || [];
+            indentsLog = JSON.parse(storedIndents) || [];
+        };
+        const saveData = () => localStorage.setItem('collegeAssetData', JSON.stringify(appData));
+        const saveHistory = () => localStorage.setItem('assignmentHistory', JSON.stringify(assignmentHistory));
+        const saveRequests = () => localStorage.setItem('requestsLog', JSON.stringify(requestsLog));
+        const saveIndents = () => localStorage.setItem('indentsLog', JSON.stringify(indentsLog));
+
+        const generateMockData = () => {
+            let newData = {}; // Use a local variable
+            DEPARTMENTS.forEach(dept => {
+                newData[dept] = {};
+                RAW_CATEGORIES.forEach(cat => {
+                    const isConsumable = CONSUMABLES.includes(cat);
+                    const count = Math.floor(Math.random() * 50) + (isConsumable ? 100 : 10);
+                    newData[dept][cat] = Array.from({ length: count }, (_, i) => {
+                        const brandList = BRANDS[cat] || ['Generic'];
+                        return { id: `${dept}-${cat.slice(0,2).toUpperCase()}-${String(i+1).padStart(3,'0')}`, name: cat, location: `Lab ${Math.floor(Math.random() * 5) + 401}`, brand: brandList[Math.floor(Math.random() * brandList.length)], quantity: isConsumable ? Math.floor(Math.random() * 20) + 1 : 1, status: STATUS_OPTIONS[Math.floor(Math.random() * STATUS_OPTIONS.length)] };
+                    });
+                });
+            });
+            localStorage.setItem('collegeAssetData', JSON.stringify(newData)); // Save directly
+            return newData; // Return the generated data
+        };
+        // *** END OF DATA FIX ***
+
+        // --- AUTHENTICATION & NAVIGATION ---
+        const handleLogin = (e) => {
+            e.preventDefault();
+            const username = document.getElementById('login-username').value.toLowerCase().trim();
+            const password = document.getElementById('login-password').value;
+            const errorEl = document.getElementById('login-error');
+            const departmentUserMatch = DEPARTMENTS.find(d => d.toLowerCase() === username);
+            if (username === 'admin' && password === 'password') { setRole('Admin'); errorEl.style.display = 'none'; } 
+            else if (departmentUserMatch && password === 'password') { setRole('User', departmentUserMatch); errorEl.style.display = 'none'; } 
+            else { errorEl.style.display = 'block'; }
+        };
+
+        const setRole = (role, department = null) => {
+            currentUserRole = role;
+            roleDisplay.textContent = role === 'User' ? `User (${department})` : 'Admin';
+            loginModal.style.display = 'none';
+            appContainer.classList.remove('hidden');
+            document.getElementById('admin-dashboard-buttons').style.display = role === 'Admin' ? 'block' : 'none';
+            if (role === 'User' && department) { state.department = department; renderUserDashboard(); navigate('user-dashboard-view'); } 
+            else { state.department = null; renderDepartments(); navigate('departments-view'); }
+        };
+
+        const handleLogout = () => {
+            currentUserRole = null; state.department = null; state.category = null;
+            loginModal.style.display = 'flex'; appContainer.classList.add('hidden');
+            document.getElementById('login-form').reset();
+        };
+        
+        const navigate = (viewId) => {
+            state.currentView = viewId;
+            views.forEach(v => v.classList.remove('active'));
+            document.getElementById(viewId).classList.add('active');
+            updateBreadcrumb();
+        };
+
+        const updateBreadcrumb = () => {
+            let path = '';
+            // UPDATED: Added 'indent-review-view' to the list
+            if (currentUserRole === 'Admin' && !['assign-view', 'requests-view', 'indent-status-view', 'indent-form-view', 'indent-options-view', 'indent-review-view'].includes(state.currentView)) path = '<span class="text-teal-600 font-bold">Dashboard</span>';
+            if (state.department && currentUserRole === 'User') path = '<span class="text-teal-600 font-bold">Dashboard</span>'
+            if (state.department && currentUserRole === 'Admin') path += ` / <span class="text-slate-700">${state.department}</span>`;
+            if (state.currentView === 'assign-view') path += ' / <span class="text-slate-900 font-bold">Request Item</span>';
+            if (state.currentView === 'requests-view') path += ' / <span class="text-slate-900 font-bold">View Requests</span>';
+            if (state.currentView.startsWith('indent-')) path += ' / <span class="text-slate-900 font-bold">Indent</span>';
+            if (state.category) path += ` / <span class="text-slate-900 font-bold">${state.category}</span>`;
+            breadcrumbEl.innerHTML = path.startsWith(' / ') ? path.substring(3) : path;
+        };
+
+        const showToast = (message, duration = 3000) => {
+            let toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.remove('hidden'); toast.style.opacity = '1';
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                setTimeout(() => toast.classList.add('hidden'), 300);
+            }, duration);
+        };
+        
+        // --- DATA HELPERS ---
+        const getCategoryAssets = (dept, cat) => (cat === 'Stationery Set') ? CONSUMABLES.flatMap(c => appData[dept]?.[c] || []) : appData[dept]?.[cat] || [];
+        const findAssetReference = (id) => {
+            for (const dept in appData) {
+                for (const cat in appData[dept]) {
+                    const index = appData[dept][cat].findIndex(a => a.id === id);
+                    if (index !== -1) return { dept, cat, index, asset: appData[dept][cat][index] };
+                }
+            }
+            return null;
+        };
+        
+        // --- CORE RENDER FUNCTIONS ---
+        const renderUserDashboard = () => document.getElementById('user-dashboard-title').textContent = `${state.department} Department Dashboard`;
+        const renderDepartments = () => {
+            const grid = document.getElementById('departments-grid');
+            grid.innerHTML = '';
+            DEPARTMENTS.forEach(dept => {
+                let totalAssets = GROUPED_CATEGORIES.reduce((acc, cat) => acc + getCategoryAssets(dept, cat).length, 0);
+                const card = document.createElement('div');
+                card.className = 'bg-white p-6 rounded-lg card-clean border hover:border-teal-500 cursor-pointer';
+                card.innerHTML = `<h3 class="text-xl font-bold pb-2 mb-2">${dept}</h3><p class="text-3xl font-extrabold text-teal-600">${totalAssets}</p><p class="text-sm text-slate-500 mt-1 font-medium">Total Assets</p>`;
+                card.addEventListener('click', () => { state.department = dept; renderDepartmentDetail(); navigate('department-detail-view'); });
+                grid.appendChild(card);
+            });
+        };
+        
+        const renderDepartmentDetail = () => {
+            document.getElementById('dept-title').textContent = `${state.department} Inventory`;
+            document.getElementById('back-to-depts').style.display = currentUserRole === 'Admin' ? 'flex' : 'none';
+            document.getElementById('back-to-user-dashboard').style.display = currentUserRole === 'User' ? 'flex' : 'none';
+            const grid = document.getElementById('categories-grid');
+            grid.innerHTML = '';
+            const categoryCounts = {};
+            GROUPED_CATEGORIES.forEach(cat => {
+                const count = getCategoryAssets(state.department, cat).length;
+                categoryCounts[cat] = count;
+                const card = document.createElement('div');
+                card.className = 'bg-white p-5 rounded-lg card-clean border hover:border-teal-500 cursor-pointer';
+                card.innerHTML = `<h4 class="font-bold text-lg pb-2 mb-2">${cat}</h4><p class="text-3xl font-extrabold text-teal-600 mt-2">${count}</p><p class="text-xs uppercase font-semibold mt-1">ASSETS</p>`;
+                card.addEventListener('click', () => { state.category = cat; state.searchText = ''; document.getElementById('search-input').value = ''; state.filterStatus = 'All'; document.getElementById('status-filter').value = 'All'; state.selectedItems.clear(); renderCategoryDetail(); navigate('category-detail-view'); });
+                grid.appendChild(card);
+            });
+            renderDepartmentChart(categoryCounts);
+        };
+        
+        const renderCategoryDetail = () => {
+            document.getElementById('category-title').textContent = `${state.category} Register`;
+            const allAssets = getCategoryAssets(state.department, state.category);
+            const filteredAssets = allAssets.filter(asset => {
+                const s = state.searchText.toLowerCase();
+                const searchMatch = !s || Object.values(asset).some(val => String(val).toLowerCase().includes(s));
+                const statusMatch = state.filterStatus === 'All' || asset.status === state.filterStatus;
+                return searchMatch && statusMatch;
+            });
+            document.getElementById('total-assets').textContent = allAssets.length;
+            renderTable(filteredAssets);
+            renderCategoryChart(allAssets);
+        };
+
+        const renderTable = (assets) => {
+            const tbody = document.getElementById('asset-table-body');
+            const isAdmin = currentUserRole === 'Admin';
+            const isStationery = state.category === 'Stationery Set';
+            ['admin-actions-bar', 'select-all-header', 'action-header'].forEach(id => document.getElementById(id).style.display = isAdmin ? '' : 'none');
+            document.getElementById('admin-click-hint').style.display = isAdmin ? 'inline' : 'none';
+            ['item-id-header', 'location-header', 'brand-model-header', 'condition-header'].forEach(id => document.getElementById(id).style.display = isStationery ? 'none' : '');
+            document.getElementById('item-name-header').style.display = isStationery ? '' : 'none';
+            if(isAdmin && isStationery) document.getElementById('action-header').style.display = 'none';
+            tbody.innerHTML = '';
+            
+            // --- UPDATE 3: Start ---
+            // If it's stationery, group items by name and sum quantity
+            if (isStationery) {
+                const summary = {};
+                assets.forEach(asset => {
+                    if (!summary[asset.name]) {
+                        summary[asset.name] = 0;
+                    }
+                    summary[asset.name] += asset.quantity;
+                });
+
+                if (Object.keys(summary).length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="2" class="text-center py-8 text-slate-500">No assets found.</td></tr>`;
+                    return;
+                }
+
+                Object.entries(summary).forEach(([name, quantity]) => {
+                    const row = document.createElement('tr');
+                    row.className = 'hover:bg-slate-50';
+                    row.innerHTML = `
+                        <td class="px-6 py-4 font-medium">${name}</td>
+                        <td class="px-6 py-4">${quantity}</td>
+                    `;
+                    tbody.appendChild(row);
+                });
+                return; // Stop here for stationery
+            }
+            // --- UPDATE 3: End ---
+
+            if (assets.length === 0) { tbody.innerHTML = `<tr><td colspan="8" class="text-center py-8 text-slate-500">No assets found.</td></tr>`; return; }
+            assets.forEach(asset => {
+                const isSelected = state.selectedItems.has(asset.id);
+                const row = document.createElement('tr');
+                row.className = `transition ${isAdmin && !isStationery ? 'table-row-clickable hover:bg-teal-50' : 'hover:bg-slate-50'} ${isSelected ? 'bg-teal-100' : ''}`;
+                const statusColor = asset.status === 'Working' ? 'text-green-700 bg-green-100' : asset.status === 'Not Working' ? 'text-red-700 bg-red-100' : 'text-amber-700 bg-amber-100';
+                row.innerHTML = `${isAdmin ? `<td class="px-6 py-4 text-center"><input type="checkbox" data-item-id="${asset.id}" class="row-checkbox" ${isSelected ? 'checked' : ''}></td>` : ''}<td class="px-6 py-4 font-semibold" style="display:${isStationery ? 'none' : ''}">${asset.id}</td><td class="px-6 py-4" style="display:${isStationery ? 'none' : ''}">${asset.location}</td><td class="px-6 py-4" style="display:${isStationery ? 'none' : ''}">${asset.brand}</td><td class="px-6 py-4 font-medium" style="display:${isStationery ? '' : 'none'}">${asset.name}</td><td class="px-6 py-4" style="display:${isStationery ? 'none' : ''}"><span class="px-3 py-1 text-xs font-bold rounded-full ${statusColor}">${asset.status}</span></td><td class="px-6 py-4">${asset.quantity}</td>${isAdmin && !isStationery ? `<td class="px-6 py-4 text-center"><button data-asset-id="${asset.id}" class="delete-item-btn text-red-600 font-semibold text-sm">Delete</button></td>` : ''}`;
+                tbody.appendChild(row);
+                if (isAdmin) {
+                    row.querySelector('.row-checkbox')?.addEventListener('change', (e) => toggleItemSelection(e, asset.id));
+                    row.querySelector('.delete-item-btn')?.addEventListener('click', (e) => { e.stopPropagation(); openModal('delete', asset); });
+                    if (!isStationery) row.addEventListener('click', (e) => { if (!e.target.closest('input, button')) openModal('edit', asset); });
+                }
+            });
+            document.getElementById('select-all-checkbox').checked = false;
+        };
+
+        // --- ASSIGNMENT & REQUESTS ---
+        const showAssignView = () => {
+            const deptGroup = document.getElementById('assign-department-group');
+            const deptSelect = document.getElementById('assign-department');
+            // --- UPDATE 1: Populate item dropdown ---
+            const itemSelect = document.getElementById('assign-item');
+            itemSelect.innerHTML = `<option value="" disabled selected>Select an item</option>` + RAW_CATEGORIES.map(c => `<option value="${c}">${c}</option>`).join('');
+            // --- END UPDATE 1 ---
+            
+            if (currentUserRole === 'Admin') { 
+                deptGroup.style.display = 'block'; 
+                deptSelect.innerHTML = DEPARTMENTS.map(d => `<option value="${d}">${d}</option>`).join(''); 
+            } 
+            else { 
+                deptGroup.style.display = 'none'; 
+            }
+            renderAssignmentHistory();
+            navigate('assign-view');
+        };
+
+        const handleAssignmentSubmit = (e) => {
+            e.preventDefault();
+            const isRequest = currentUserRole === 'User';
+            const newEntry = {
+                id: Date.now(),
+                date: new Date().toLocaleDateString('en-IN'),
+                department: currentUserRole === 'Admin' ? document.getElementById('assign-department').value : state.department,
+                item: document.getElementById('assign-item').value,
+                quantity: document.getElementById('assign-quantity').value,
+                status: isRequest ? 'Pending' : 'Approved'
+            };
+            if (isRequest) {
+                requestsLog.unshift(newEntry);
+                saveRequests();
+                showToast('Request submitted successfully!');
+            } else { // Admin direct assignment
+                assignmentHistory.unshift(newEntry);
+                saveHistory();
+                
+                // --- UPDATE 2: Add to requestsLog as well ---
+                requestsLog.unshift(newEntry);
+                saveRequests();
+                // --- END UPDATE 2 ---
+
+                showToast('Assignment logged successfully!');
+            }
+            document.getElementById('assign-form').reset();
+            if(!isRequest) renderAssignmentHistory();
+        };
+
+        const renderAssignmentHistory = () => {
+            const tbody = document.getElementById('assignment-history-table');
+            tbody.innerHTML = '';
+            const historyToRender = currentUserRole === 'Admin' ? assignmentHistory : assignmentHistory.filter(entry => entry.department === state.department);
+            if (historyToRender.length === 0) { tbody.innerHTML = `<tr><td colspan="4" class="text-center py-8 text-slate-500">No assignment history found.</td></tr>`; return; }
+            historyToRender.forEach(entry => {
+                const row = document.createElement('tr');
+                row.innerHTML = `<td class="px-6 py-4">${entry.date}</td><td class="px-6 py-4 font-semibold">${entry.department}</td><td class="px-6 py-4">${entry.item}</td><td class="px-6 py-4">${entry.quantity}</td>`;
+                tbody.appendChild(row);
+            });
+        };
+
+        const showRequestsView = () => {
+            const isAdmin = currentUserRole === 'Admin';
+            document.getElementById('request-history-admin-section').style.display = isAdmin ? 'block' : 'none';
+            document.getElementById('requests-status-header').textContent = isAdmin ? 'Action' : 'Status';
+            document.getElementById('pending-requests-title').textContent = isAdmin ? 'Pending Requests' : 'My Requests';
+            if (isAdmin) renderRequestHistory();
+            renderPendingRequests();
+            navigate('requests-view');
+        };
+        
+        const renderRequestHistory = () => {
+             const tbody = document.getElementById('request-history-table');
+             tbody.innerHTML = '';
+             const history = requestsLog.filter(r => r.status !== 'Pending');
+             if (history.length === 0) { tbody.innerHTML = `<tr><td colspan="4" class="text-center py-8 text-slate-500">No historical requests found.</td></tr>`; return; }
+             history.forEach(req => {
+                const statusColor = req.status === 'Approved' ? 'text-green-600' : 'text-red-600';
+                const row = document.createElement('tr');
+                row.innerHTML = `<td class="px-6 py-4">${req.date}</td><td class="px-6 py-4 font-semibold">${req.department}</td><td class="px-6 py-4">${req.item}</td><td class="px-6 py-4 font-bold ${statusColor}">${req.status}</td>`;
+                tbody.appendChild(row);
+             });
+        };
+        
+        const renderPendingRequests = () => {
+            const tbody = document.getElementById('pending-requests-table');
+            const isAdmin = currentUserRole === 'Admin';
+            tbody.innerHTML = '';
+            const pending = isAdmin ? requestsLog.filter(r => r.status === 'Pending') : requestsLog.filter(r => r.department === state.department);
+            if (pending.length === 0) { tbody.innerHTML = `<tr><td colspan="5" class="text-center py-8 text-slate-500">No pending requests.</td></tr>`; return; }
+            pending.forEach(req => {
+                const row = document.createElement('tr');
+                let statusCell = `<td class="px-6 py-4 font-semibold text-yellow-600">${req.status}</td>`;
+                if(isAdmin) {
+                    statusCell = `<td class="px-6 py-4 space-x-2"><button data-request-id="${req.id}" class="accept-btn bg-green-500 text-white px-3 py-1 rounded-md text-sm">Accept</button><button data-request-id="${req.id}" class="reject-btn bg-red-500 text-white px-3 py-1 rounded-md text-sm">Reject</button></td>`;
+                }
+                row.innerHTML = `<td class="px-6 py-4">${req.date}</td><td class="px-6 py-4 font-semibold">${req.department}</td><td class="px-6 py-4">${req.item}</td><td class="px-6 py-4">${req.quantity}</td>${statusCell}`;
+                tbody.appendChild(row);
+            });
+            document.querySelectorAll('.accept-btn').forEach(btn => btn.addEventListener('click', (e) => handleRequestAction(e.target.dataset.requestId, 'Approved')));
+            document.querySelectorAll('.reject-btn').forEach(btn => btn.addEventListener('click', (e) => handleRequestAction(e.target.dataset.requestId, 'Rejected')));
+        };
+        
+        const handleRequestAction = (requestId, action) => {
+            const request = requestsLog.find(r => r.id == requestId);
+            if(!request) return;
+            request.status = action;
+            if (action === 'Approved') {
+                assignmentHistory.unshift({ ...request });
+                saveHistory();
+            }
+            saveRequests();
+            showRequestsView();
+            showToast(`Request has been ${action.toLowerCase()}!`);
+        };
+
+        // --- INDENT WORKFLOW ---
+        const showIndentView = () => {
+            if (currentUserRole === 'Admin') {
+                renderIndentStatusView();
+                navigate('indent-status-view');
+            } else {
+                navigate('indent-options-view');
+            }
+        };
+
+        const addIndentRow = () => {
+            const tbody = document.getElementById('indent-items-table');
+            const row = document.createElement('tr');
+            const serialNumber = tbody.children.length + 1;
+            // UPDATE: Changed text input to select dropdown
+            row.innerHTML = `
+                <td class="px-4 py-2 serial-number">${serialNumber}</td>
+                <td class="px-4 py-2">
+                    <select class="w-full p-2 border rounded-md item-input" required>
+                        <option value="" disabled selected>Select an item</option>
+                        ${RAW_CATEGORIES.map(c => `<option value="${c}">${c}</option>`).join('')}
+                    </select>
+                </td>
+                <td class="px-4 py-2"><input type="number" placeholder="Qty" min="1" class="w-full p-2 border rounded-md quantity-input" required></td>
+                <td class="px-4 py-2 text-center"><button type="button" class="delete-indent-row-btn text-red-500 hover:text-red-700 font-semibold">Remove</button></td>
+            `;
+            tbody.appendChild(row);
+            row.querySelector('.delete-indent-row-btn').addEventListener('click', () => {
+                row.remove();
+                renumberIndentRows();
+            });
+        };
+        
+        const renumberIndentRows = () => {
+            const rows = document.querySelectorAll('#indent-items-table .serial-number');
+            rows.forEach((cell, index) => {
+                cell.textContent = index + 1;
+            });
+        };
+        
+        const handleIndentSubmit = (e) => {
+            e.preventDefault();
+            const rows = document.querySelectorAll('#indent-items-table tr');
+            if (rows.length === 0) return showToast('Please add at least one item to the indent.');
+            
+            const items = Array.from(rows).map(row => ({
+                item: row.querySelector('.item-input').value,
+                quantity: row.querySelector('.quantity-input').value
+            })).filter(i => i.item && i.quantity); // Filter out empty/unselected rows
+
+            if (items.length === 0) return showToast('Please fill out at least one item row.');
+
+            const newIndent = {
+                id: document.getElementById('indent-no').textContent,
+                date: document.getElementById('indent-date').textContent,
+                department: state.department,
+                orderedBy: document.getElementById('indent-ordered-by').value,
+                items: items, // Items now just have {item, quantity}
+                status: 'Pending'
+            };
+            indentsLog.unshift(newIndent);
+            saveIndents();
+            showToast('Indent submitted successfully!');
+            navigate('user-dashboard-view');
+        };
+
+        const renderIndentForm = () => {
+            document.getElementById('indent-dept-name').textContent = state.department;
+            document.getElementById('indent-no').textContent = `IND-${Date.now()}`;
+            document.getElementById('indent-date').textContent = new Date().toLocaleDateString('en-IN');
+            const indentTableBody = document.getElementById('indent-items-table');
+            indentTableBody.innerHTML = '';
+            for(let i=0; i<10; i++) { addIndentRow(); } // Add 10 empty rows initially
+            document.getElementById('indent-form').reset();
+            navigate('indent-form-view');
+        };
+
+        const renderIndentStatusView = () => {
+            const isAdmin = currentUserRole === 'Admin';
+            document.getElementById('indent-history-admin-section').style.display = isAdmin ? 'block' : 'none';
+            document.getElementById('indents-status-header').textContent = isAdmin ? 'Action' : 'Status';
+            document.getElementById('pending-indents-title').textContent = isAdmin ? 'Pending Indents' : 'My Indent Status';
+            
+            if (isAdmin) {
+                const historyTbody = document.getElementById('indent-history-table');
+                historyTbody.innerHTML = '';
+                const history = indentsLog.filter(i => i.status === 'Solved' || i.status === 'Rejected'); // Show solved and rejected
+                if (history.length === 0) { historyTbody.innerHTML = `<tr><td colspan="5" class="text-center py-8 text-slate-500">No historical indents.</td></tr>`; }
+                else {
+                    history.forEach(indent => {
+                        const statusColor = indent.status === 'Solved' ? 'text-green-600' : 'text-red-600';
+                        const row = document.createElement('tr');
+                        
+                        // Check if items have been reviewed, if so, show details
+                        let itemsHTML = '';
+                        if (indent.items && indent.items[0].itemStatus) {
+                             itemsHTML = indent.items.map(i => {
+                                let color = 'text-green-600';
+                                if (i.itemStatus === 'Rejected' || i.approvedQty == 0) color = 'text-red-600';
+                                else if (i.itemStatus === 'Partial' || i.approvedQty < i.quantity) color = 'text-amber-600';
+                                return `<span class="${color}">${i.item} (Approved: ${i.approvedQty || 0}/${i.quantity})</span>`;
+                            }).join('<br>');
+                        } else {
+                            itemsHTML = indent.items.map(i => `${i.item} (x${i.quantity})`).join('<br>');
+                        }
+
+                        row.innerHTML = `<td class="px-6 py-4">${indent.date}</td><td class="px-6 py-4">${indent.id}</td><td class="px-6 py-4 font-semibold">${indent.department}</td><td class="px-6 py-4 text-sm">${itemsHTML}</td><td class="px-6 py-4 font-bold ${statusColor}">${indent.status}</td>`;
+                        historyTbody.appendChild(row);
+                    });
+                }
+            }
+
+            const pendingTbody = document.getElementById('pending-indents-table');
+            pendingTbody.innerHTML = '';
+            
+            // User sees Pending, In Progress, Solved, Rejected. Admin sees Pending, In Progress.
+            const pending = isAdmin 
+                ? indentsLog.filter(i => i.status === 'Pending' || i.status === 'In Progress') 
+                : indentsLog.filter(i => i.department === state.department);
+                
+            if (pending.length === 0) { pendingTbody.innerHTML = `<tr><td colspan="5" class="text-center py-8 text-slate-500">No indents found.</td></tr>`; return; }
+            
+            pending.forEach(indent => {
+                const row = document.createElement('tr');
+                let statusCellHTML = '';
+                
+                // Logic for Admin's action cell
+                if (isAdmin) {
+                    if (indent.status === 'Pending') {
+                        statusCellHTML = `<td class="px-6 py-4 space-x-2"><button data-indent-id="${indent.id}" class="review-indent-btn bg-blue-500 text-white px-3 py-1 rounded-md text-sm">Review</button><button data-indent-id="${indent.id}" class="reject-indent-btn bg-red-500 text-white px-3 py-1 rounded-md text-sm">Reject</button></td>`;
+                    } else if (indent.status === 'In Progress') {
+                        statusCellHTML = `<td class="px-6 py-4"><select data-indent-id="${indent.id}" class="indent-status-change p-2 border rounded-md"><option value="In Progress" selected>In Progress</option><option value="Solved">Mark as Solved</option></select></td>`;
+                    }
+                } else { // Logic for User's status cell
+                    const color = indent.status === 'Pending' ? 'text-yellow-600' : indent.status === 'In Progress' ? 'text-blue-600' : indent.status === 'Solved' ? 'text-green-600' : 'text-red-600';
+                    statusCellHTML = `<td class="px-6 py-4 font-semibold ${color}">${indent.status}</td>`;
+                }
+                
+                // Logic for User's item list
+                let itemsHTML = '';
+                if (indent.status === 'Pending' || !indent.items[0].itemStatus) { // Show basic list if pending or not yet reviewed
+                    itemsHTML = indent.items.map(i => `${i.item} (x${i.quantity})`).join('<br>');
+                } else {
+                    // Show detailed feedback if available (for In Progress, Solved, Rejected)
+                    itemsHTML = indent.items.map(i => {
+                        let color = 'text-slate-700';
+                        if (i.itemStatus === 'Rejected' || i.approvedQty == 0) color = 'text-red-600 line-through';
+                        else if (i.itemStatus === 'Partial' || (i.approvedQty < i.quantity)) color = 'text-amber-600';
+                        else if (i.itemStatus === 'Approved') color = 'text-green-600';
+                        
+                        return `<span class="${color}">${i.item} (Approved: ${i.approvedQty || 0}/${i.quantity})</span>`;
+                    }).join('<br>');
+                }
+
+                row.innerHTML = `<td class="px-6 py-4">${indent.date}</td><td class="px-6 py-4">${indent.id}</td><td class="px-6 py-4 font-semibold">${indent.department}</td><td class="px-6 py-4 text-sm">${itemsHTML}</td>${statusCellHTML}`;
+                pendingTbody.appendChild(row);
+            });
+            
+            document.querySelectorAll('.indent-status-change').forEach(sel => sel.addEventListener('change', (e) => handleIndentAction(e.target.dataset.indentId, e.target.value)));
+            document.querySelectorAll('.review-indent-btn').forEach(btn => btn.addEventListener('click', (e) => showIndentReview(e.target.dataset.indentId)));
+            document.querySelectorAll('.reject-indent-btn').forEach(btn => btn.addEventListener('click', (e) => handleIndentAction(e.target.dataset.indentId, 'Rejected')));
+        };
+        
+        // This function now handles simple status changes (like Reject or Mark as Solved)
+        const handleIndentAction = (indentId, newStatus) => {
+            const indent = indentsLog.find(i => i.id == indentId);
+            if(!indent) return;
+            
+            indent.status = newStatus;
+            
+            // If admin rejects the whole indent, mark all items as rejected
+            if (newStatus === 'Rejected') {
+                indent.items.forEach(item => {
+                    item.approvedQty = 0;
+                    item.itemStatus = 'Rejected';
+                });
+            }
+            
+            saveIndents();
+            showToast(`Indent status updated to "${newStatus}"!`);
+            renderIndentStatusView();
+        };
+
+        // NEW FUNCTION: Show the detailed review page
+        const showIndentReview = (indentId) => {
+            const indent = indentsLog.find(i => i.id == indentId);
+            if (!indent) return;
+            
+            document.getElementById('review-indent-id').value = indentId;
+            document.getElementById('review-indent-no').textContent = indent.id;
+            document.getElementById('review-indent-dept').textContent = indent.department;
+            document.getElementById('review-indent-date').textContent = indent.date;
+            document.getElementById('review-indent-ordered').textContent = indent.orderedBy;
+            
+            const reviewTbody = document.getElementById('indent-review-items-table');
+            reviewTbody.innerHTML = '';
+            
+            indent.items.forEach((item, index) => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td class="px-4 py-2">${index + 1}</td>
+                    <td class="px-4 py-2">${item.item}</td>
+                    <td class="px-4 py-2">${item.quantity}</td>
+                    <td class="px-4 py-2">
+                        <input type="number" class="w-full p-2 border rounded-md approved-qty-input" value="${item.quantity}" min="0" max="${item.quantity}">
+                    </td>
+                    <td class="px-4 py-2">
+                        <select class="w-full p-2 border rounded-md item-status-select">
+                            <option value="Approved" selected>Approved</option>
+                            <option value="Partial">Partial</option>
+                            <option value="Rejected">Rejected</option>
+                            <option value="Out of Stock">Out of Stock</option>
+                        </select>
+                    </td>
+                `;
+                reviewTbody.appendChild(row);
+            });
+            
+            navigate('indent-review-view');
+        };
+
+        // NEW FUNCTION: Handle the submission of the review form
+        const handleIndentReviewSubmit = (e) => {
+            e.preventDefault();
+            const indentId = document.getElementById('review-indent-id').value;
+            const indent = indentsLog.find(i => i.id == indentId);
+            if (!indent) return;
+            
+            const reviewRows = document.querySelectorAll('#indent-review-items-table tr');
+            let allRejected = true;
+            
+            reviewRows.forEach((row, index) => {
+                const approvedQty = row.querySelector('.approved-qty-input').value;
+                const itemStatus = row.querySelector('.item-status-select').value;
+                
+                indent.items[index].approvedQty = approvedQty;
+                indent.items[index].itemStatus = itemStatus;
+                
+                if (itemStatus !== 'Rejected' && approvedQty > 0) {
+                    allRejected = false;
+                }
+            });
+            
+            // If all items are rejected, mark the whole indent as Rejected
+            indent.status = allRejected ? 'Rejected' : 'In Progress';
+            
+            saveIndents();
+            showToast('Indent processed successfully!');
+            renderIndentStatusView();
+            navigate('indent-status-view');
+        };
+
+        // --- MODAL & FORM LOGIC ---
+        const openModal = (operation, asset = null) => {
+            const form = document.getElementById('asset-form'); form.reset();
+            document.getElementById('modal-operation').value = operation;
+            document.getElementById('delete-message').classList.add('hidden');
+            const isStationery = state.category === 'Stationery Set';
+            document.getElementById('asset-name-group').style.display = isStationery ? '' : 'none';
+            if(isStationery) document.getElementById('asset-name').innerHTML = CONSUMABLES.map(c => `<option value="${c}">${c}</option>`).join('');
+            form.querySelectorAll('input, select').forEach(el => el.disabled = false);
+            if (operation === 'add') {
+                document.getElementById('modal-title').textContent = 'Add New Asset'; document.getElementById('modal-submit-btn').textContent = 'Save Record';
+            } else {
+                document.getElementById('asset-original-id').value = asset.id; document.getElementById('asset-id').value = asset.id; document.getElementById('asset-location').value = asset.location; document.getElementById('asset-brand').value = asset.brand; document.getElementById('asset-status').value = asset.status; document.getElementById('asset-quantity').value = asset.quantity;
+                if(isStationery) document.getElementById('asset-name').value = asset.name;
+                if (operation === 'edit') {
+                    document.getElementById('modal-title').textContent = `Edit Asset: ${asset.id}`; document.getElementById('modal-submit-btn').textContent = 'Update Record'; document.getElementById('asset-id').disabled = true;
+                } else {
+                    document.getElementById('modal-title').textContent = `Confirm Deletion: ${asset.id}`; document.getElementById('modal-submit-btn').textContent = 'Confirm Delete'; document.getElementById('delete-message').classList.remove('hidden'); form.querySelectorAll('input, select').forEach(el => el.disabled = true);
+                }
+            }
+            document.getElementById('asset-modal').style.display = 'flex';
+        };
+
+        const handleFormSubmit = (e) => {
+            e.preventDefault();
+            const operation = document.getElementById('modal-operation').value;
+            const originalId = document.getElementById('asset-original-id').value;
+            const isStationery = state.category === 'Stationery Set';
+            if (operation === 'delete') {
+                const ref = findAssetReference(originalId);
+                if (ref) appData[ref.dept][ref.cat].splice(ref.index, 1);
+            } else {
+                const assetData = { id: document.getElementById('asset-id').value, location: document.getElementById('asset-location').value, brand: document.getElementById('asset-brand').value, status: document.getElementById('asset-status').value, quantity: parseInt(document.getElementById('asset-quantity').value), name: isStationery ? document.getElementById('asset-name').value : state.category };
+                const targetCategory = CONSUMABLES.includes(assetData.name) ? assetData.name : state.category;
+                if (operation === 'add') {
+                    if (!appData[state.department][targetCategory]) appData[state.department][targetCategory] = [];
+                    appData[state.department][targetCategory].push(assetData);
+                } else { const ref = findAssetReference(originalId); Object.assign(ref.asset, assetData); }
+            }
+            saveData(); document.getElementById('asset-modal').style.display = 'none'; renderCategoryDetail();
+            showToast(`Asset record ${operation}ed successfully!`);
+        };
+        
+        // --- BULK ACTIONS ---
+        const toggleItemSelection = (e, id) => { if (e.target.checked) state.selectedItems.add(id); else state.selectedItems.delete(id); updateBulkActionButton(); };
+        const toggleAllItems = (e) => {
+            const checkboxes = document.querySelectorAll('.row-checkbox');
+            const assetIds = Array.from(checkboxes).map(cb => cb.dataset.itemId);
+            state.selectedItems.clear();
+            if (e.target.checked) assetIds.forEach(id => state.selectedItems.add(id));
+            checkboxes.forEach(cb => cb.checked = e.target.checked);
+            renderCategoryDetail();
+        };
+        const updateBulkActionButton = () => { const btn = document.getElementById('bulk-action-btn'); btn.innerHTML = `Bulk Actions (${state.selectedItems.size})`; btn.disabled = state.selectedItems.size === 0; };
+        const openBulkModal = (type) => {
+            if (state.selectedItems.size === 0) return showToast('Please select items first.');
+            const modal = document.getElementById('bulk-action-modal');
+            document.getElementById('bulk-operation-type').value = type;
+            ['bulk-status-group', 'bulk-move-group', 'bulk-delete-group'].forEach(id => document.getElementById(id).style.display = 'none');
+            if (type === 'status') { document.getElementById('bulk-modal-title').textContent = 'Bulk Change Status'; document.getElementById('bulk-status-group').style.display = 'block'; } 
+            else if (type === 'move') { document.getElementById('bulk-modal-title').textContent = 'Bulk Move Assets'; const deptSelect = document.getElementById('bulk-new-dept'); deptSelect.innerHTML = DEPARTMENTS.filter(d => d !== state.department).map(d => `<option value="${d}">${d}</option>`).join(''); document.getElementById('bulk-move-group').style.display = 'block'; } 
+            else if (type === 'delete') { document.getElementById('bulk-modal-title').textContent = 'Bulk Delete Confirmation'; document.getElementById('bulk-delete-count').textContent = state.selectedItems.size; document.getElementById('bulk-delete-group').classList.remove('hidden'); }
+            document.getElementById('bulk-item-count').textContent = state.selectedItems.size; modal.style.display = 'flex';
+        };
+        
+        const handleBulkActionSubmit = (e) => {
+            e.preventDefault();
+            const type = document.getElementById('bulk-operation-type').value;
+            state.selectedItems.forEach(id => {
+                const ref = findAssetReference(id);
+                if (!ref) return;
+                if (type === 'delete') { appData[ref.dept][ref.cat].splice(ref.index, 1); } 
+                else if (type === 'status') { ref.asset.status = document.getElementById('bulk-new-status').value; } 
+                else if (type === 'move') { const newDept = document.getElementById('bulk-new-dept').value; const movedAsset = appData[ref.dept][ref.cat].splice(ref.index, 1)[0]; if (!appData[newDept][ref.cat]) appData[newDept][ref.cat] = []; appData[newDept][ref.cat].push(movedAsset); }
+            });
+            saveData(); state.selectedItems.clear(); document.getElementById('bulk-action-modal').style.display = 'none'; showToast('Bulk action completed!');
+            if (type === 'move') { navigate('departments-view'); renderDepartments(); } else { renderCategoryDetail(); }
+        };
+
+        // --- CHARTING & DOWNLOADS ---
+        const renderDepartmentChart = (categoryCounts) => {
+            const ctx = document.getElementById('department-chart').getContext('2d');
+            if (departmentChart) departmentChart.destroy();
+            departmentChart = new Chart(ctx, { type: 'bar', data: { labels: GROUPED_CATEGORIES, datasets: [{ label: 'Total Assets', data: GROUPED_CATEGORIES.map(cat => categoryCounts[cat] || 0), backgroundColor: 'rgba(20, 184, 166, 0.8)' }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } } });
+        };
+        
+        // UPDATE 2: Changed Pie Chart to show Condition
+        const renderCategoryChart = (assets) => {
+            document.getElementById('category-chart-title').textContent = "Condition Composition"; // Update title
+            const ctx = document.getElementById('category-chart').getContext('2d');
+            if (categoryChart) categoryChart.destroy();
+            
+            const statusCounts = assets.reduce((acc, asset) => {
+                acc[asset.status] = (acc[asset.status] || 0) + 1; // Count items by status, not quantity
+                return acc;
+            }, {});
+
+            if (Object.keys(statusCounts).length === 0) { if(ctx) ctx.clearRect(0,0,ctx.canvas.width, ctx.canvas.height); return; }
+            
+            categoryChart = new Chart(ctx, { 
+                type: 'doughnut', 
+                data: { 
+                    labels: Object.keys(statusCounts), 
+                    datasets: [{ 
+                        data: Object.values(statusCounts), 
+                        backgroundColor: ['#10B981', '#EF4444', '#F59E0B', '#6B7280'], // Green, Red, Amber, Gray
+                        borderWidth: 4 
+                    }] 
+                }, 
+                options: { responsive: true, maintainAspectRatio: false, cutout: '70%', plugins: { legend: { position: 'right' } } } 
+            });
+        };
+        
+        const exportToExcel = (data, filename) => {
+            // Helper function to find asset details (unchanged)
+            const findAssetDetails = (id) => {
+                for (const dept in appData) {
+                    for (const cat in appData[dept]) {
+                        const asset = appData[dept][cat].find(a => a.id === id);
+                        if (asset) return { Department: dept, Category: cat };
+                    }
+                }
+                const ref = findAssetReference(id); // Use original function as fallback
+                if (ref) return { Department: ref.dept, Category: ref.cat };
+                return { Department: 'N/A', Category: 'N/A' };
+            };
+            
+            // --- UPDATED (Excel Export for Stationery) ---
+            let excelData;
+            if (state.category === 'Stationery Set') {
+                // For stationery, use the grouped summary
+                const summary = {};
+                data.forEach(asset => {
+                    if (!summary[asset.name]) {
+                        summary[asset.name] = 0;
+                    }
+                    summary[asset.name] += asset.quantity;
+                });
+                excelData = Object.entries(summary).map(([name, quantity]) => ({
+                    Department: state.department,
+                    Category: state.category,
+                    ItemName: name,
+                    Quantity: quantity
+                }));
+            } else {
+                // For other items, use the detailed list
+                excelData = data.map(asset => {
+                    const details = findAssetDetails(asset.id);
+                    return { 
+                        Department: details.Department, 
+                        Category: details.Category, 
+                        ItemID: asset.id,
+                        Location: asset.location,
+                        BrandModel: asset.brand,
+                        ItemName: asset.name,
+                        Condition: asset.status,
+                        Quantity: asset.quantity
+                    };
+                });
+            }
+            
+            const ws = XLSX.utils.json_to_sheet(excelData);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Asset_Data");
+            XLSX.writeFile(wb, filename);
+        };
+        
+        // --- EVENT LISTENERS ---
+        document.getElementById('download-all-btn').addEventListener('click', () => { 
+            const allAssets = getCategoryAssets(state.department, state.category);
+            exportToExcel(allAssets, `${state.department}_${state.category}_All.xlsx`); 
+        });
+        
+        // UPDATE 3: Download Current View (Filtered)
+        document.getElementById('download-current-btn').addEventListener('click', () => { 
+            const allAssets = getCategoryAssets(state.department, state.category);
+            const filtered = allAssets.filter(asset => {
+                const s = state.searchText.toLowerCase();
+                const searchMatch = !s || Object.values(asset).some(val => String(val).toLowerCase().includes(s));
+                const statusMatch = state.filterStatus === 'All' || asset.status === state.filterStatus;
+                return searchMatch && statusMatch;
+            });
+            exportToExcel(filtered, `${state.department}_${state.category}_Filtered_${state.filterStatus}.xlsx`);
+        });
+
+        document.getElementById('login-form').addEventListener('submit', handleLogin);
+        document.getElementById('logout-btn').addEventListener('click', handleLogout);
+        document.getElementById('back-to-depts').addEventListener('click', () => { state.department = null; navigate('departments-view'); renderDepartments(); });
+        document.getElementById('back-to-user-dashboard').addEventListener('click', () => navigate('user-dashboard-view'));
+        document.getElementById('go-to-inventory-btn').addEventListener('click', () => { if (state.department) { renderDepartmentDetail(); navigate('department-detail-view'); } });
+        document.getElementById('back-to-categories').addEventListener('click', () => { state.category = null; navigate('department-detail-view'); renderDepartmentDetail(); });
+        document.getElementById('search-input').addEventListener('input', (e) => { state.searchText = e.target.value; renderCategoryDetail(); });
+        document.getElementById('status-filter').addEventListener('change', (e) => { state.filterStatus = e.target.value; renderCategoryDetail(); });
+        document.getElementById('action-add-item').addEventListener('click', () => openModal('add'));
+        document.getElementById('cancel-modal-btn').addEventListener('click', () => document.getElementById('asset-modal').style.display = 'none');
+        document.getElementById('asset-form').addEventListener('submit', handleFormSubmit);
+        document.getElementById('bulk-action-btn').addEventListener('click', () => document.getElementById('bulk-action-dropdown').classList.toggle('hidden'));
+        document.getElementById('bulk-status-btn').addEventListener('click', () => openBulkModal('status'));
+        document.getElementById('bulk-move-btn').addEventListener('click', () => openBulkModal('move'));
+        document.getElementById('bulk-delete-btn').addEventListener('click', () => openBulkModal('delete'));
+        document.getElementById('bulk-cancel-btn').addEventListener('click', () => document.getElementById('bulk-action-modal').style.display = 'none');
+        document.getElementById('bulk-action-form').addEventListener('submit', handleBulkActionSubmit);
+        
+        // --- UPDATED EVENT LISTENERS ---
+        const adminAssignBtn = document.getElementById('admin-assign-btn');
+        if (adminAssignBtn) {
+            adminAssignBtn.addEventListener('click', showAssignView);
+        }
+        
+        const userAssignBtn = document.getElementById('user-assign-btn');
+        if (userAssignBtn) {
+            userAssignBtn.addEventListener('click', showAssignView);
+        }
+        
+        const adminRequestsBtn = document.getElementById('admin-requests-btn');
+        if (adminRequestsBtn) {
+            adminRequestsBtn.addEventListener('click', showRequestsView);
+        }
+        
+        document.getElementById('user-requests-btn').addEventListener('click', showRequestsView);
+        document.getElementById('assign-form').addEventListener('submit', handleAssignmentSubmit);
+        document.getElementById('back-from-assign').addEventListener('click', () => navigate(currentUserRole === 'Admin' ? 'departments-view' : 'user-dashboard-view'));
+        document.getElementById('back-from-requests').addEventListener('click', () => navigate(currentUserRole === 'Admin' ? 'departments-view' : 'user-dashboard-view'));
+
+        // INDENT LISTENERS
+        document.getElementById('user-indent-btn').addEventListener('click', showIndentView);
+        document.getElementById('admin-indents-btn').addEventListener('click', showIndentView);
+        document.getElementById('go-to-indent-form-btn').addEventListener('click', renderIndentForm);
+        document.getElementById('go-to-indent-status-btn').addEventListener('click', () => { renderIndentStatusView(); navigate('indent-status-view'); });
+        document.getElementById('back-from-indent-options').addEventListener('click', () => navigate('user-dashboard-view'));
+        document.getElementById('back-from-indent-form').addEventListener('click', () => navigate('indent-options-view'));
+        document.getElementById('back-from-indent-status').addEventListener('click', () => navigate(currentUserRole === 'Admin' ? 'departments-view' : 'indent-options-view'));
+        document.getElementById('add-indent-row-btn').addEventListener('click', addIndentRow);
+        document.getElementById('indent-form').addEventListener('submit', handleIndentSubmit);
+        
+        // NEW LISTENER for Indent Review page
+        document.getElementById('back-from-indent-review').addEventListener('click', () => navigate('indent-status-view'));
+        document.getElementById('indent-review-form').addEventListener('submit', handleIndentReviewSubmit);
+
+        // --- INITIAL LOAD ---
+        loadData();
+    });
+    </script>
+</body>
+</html>
