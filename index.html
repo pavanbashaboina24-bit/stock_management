@@ -49,12 +49,12 @@
     </div>
 
     <div id="app-container" class="max-w-7xl mx-auto p-4 sm:p-8 lg:p-12 hidden">
-        <header class="mb-12 pb-4 border-b border-slate-200 flex justify-between items-center">
+        <header class="mb-12 pb-4 border-b border-slate-200 flex flex-col sm:flex-row justify-between items-start sm:items-center">
             <div>
-                <h1 class="text-5xl font-extrabold text-slate-900 tracking-tight">Asset Stock Management</h1>
-                <p id="breadcrumb" class="text-slate-500 font-medium mt-3 text-lg">Centralized oversight for campus inventory.</p>
+                <h1 class="text-3xl sm:text-5xl font-extrabold text-slate-900 tracking-tight">Asset Stock Management</h1>
+                <p id="breadcrumb" class="text-slate-500 font-medium mt-3 text-base sm:text-lg">Centralized oversight for campus inventory.</p>
             </div>
-            <div id="user-info" class="flex items-center space-x-4">
+            <div id="user-info" class="flex items-center space-x-4 mt-4 sm:mt-0">
                  <div id="role-display" class="px-4 py-2 bg-slate-100 rounded-full text-sm font-semibold">
                     Logged in as: <span class="text-teal-600">N/A</span>
                 </div>
@@ -68,7 +68,7 @@
                     <h2 id="user-dashboard-title" class="text-3xl font-bold text-slate-800">Department Dashboard</h2>
                     <p class="text-slate-600 mt-2">Please select an option to continue.</p>
                 </div>
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                     <button id="go-to-inventory-btn" class="bg-white p-8 rounded-lg card-clean border hover:border-teal-500 cursor-pointer text-center flex flex-col items-center justify-center">
                         <span class="text-5xl mb-4">🗃️</span>
                         <h3 class="text-xl font-bold text-slate-900">View Inventory</h3>
@@ -84,6 +84,11 @@
                         <h3 class="text-xl font-bold text-slate-900">Create Indent</h3>
                         <p class="text-sm text-slate-500 mt-1">Submit a formal indent request</p>
                     </button>
+                    <button id="go-to-stationary-upload-btn" class="bg-white p-8 rounded-lg card-clean border hover:border-teal-500 cursor-pointer text-center flex flex-col items-center justify-center">
+                        <span class="text-5xl mb-4">📦</span>
+                        <h3 class="text-xl font-bold text-slate-900">Upload Stationary</h3>
+                        <p class="text-sm text-slate-500 mt-1">Manage custom items</p>
+                    </button>
                 </div>
             </section>
 
@@ -93,9 +98,10 @@
                     <p class="text-slate-600 mt-2">Choose a department to begin your analysis.</p>
                 </div>
                 <div id="admin-dashboard-buttons" class="mb-10 p-4 bg-slate-100 rounded-lg" style="display: none;">
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                         <button id="admin-assign-btn" class="bg-blue-500 text-white font-semibold py-3 px-4 rounded-lg hover:bg-blue-600 transition">Assign Items</button>
                         <button id="admin-indents-btn" class="bg-indigo-500 text-white font-semibold py-3 px-4 rounded-lg hover:bg-indigo-600 transition">Manage Indents</button>
+                        <button id="admin-stationary-upload-btn" class="bg-purple-500 text-white font-semibold py-3 px-4 rounded-lg hover:bg-purple-600 transition">Manage Stationary</button>
                     </div>
                 </div>
                 <div id="departments-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6"></div>
@@ -155,7 +161,7 @@
                                 <tbody id="indent-items-table" class="divide-y divide-slate-200"></tbody>
                             </table>
                         </div>
-                         <div class="grid grid-cols-3 gap-6 mt-6 pt-4 border-t">
+                         <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6 pt-4 border-t">
                              <div>
                                 <label for="indent-ordered-by" class="block text-sm font-medium text-slate-700">Ordered by:</label>
                                 <input type="text" id="indent-ordered-by" required class="w-full mt-1 p-2 border rounded-md">
@@ -226,7 +232,7 @@
                         <span class="mr-1 text-xl">←</span> Back to Indent List
                     </button>
                     <h2 class="text-4xl font-extrabold text-slate-900">Review Indent</h2>
-                    <div class="flex space-x-8 mt-2 text-sm text-slate-600">
+                    <div class="flex flex-col sm:flex-row sm:space-x-8 mt-2 text-sm text-slate-600">
                         <span><strong>Indent No:</strong> <span id="review-indent-no"></span></span>
                         <span><strong>Department:</strong> <span id="review-indent-dept"></span></span>
                         <span><strong>Date:</strong> <span id="review-indent-date"></span></span>
@@ -424,6 +430,55 @@
                     <button id="download-all-btn" class="bg-gray-600 text-white font-semibold py-2 px-6 rounded-full hover:bg-gray-700 transition">⬇️ Download Full Inventory</button>
                 </div>
             </section>
+            
+            <section id="stationary-upload-view" class="view">
+                <div class="mb-8">
+                    <button id="back-from-stationary-upload" class="text-base font-semibold text-teal-600 hover:text-teal-800 transition flex items-center mb-6">
+                        <span class="mr-1 text-xl">←</span> Back to Dashboard
+                    </button>
+                    <h2 class="text-4xl font-extrabold text-slate-900">Upload New Stationary</h2>
+                    <p class="text-slate-600 mt-2">Add or remove custom items for all departments.</p>
+                </div>
+
+                <div class="bg-white p-6 rounded-lg card-clean border mb-12">
+                    <h3 class="text-2xl font-bold text-slate-800 mb-6">Add New Item</h3>
+                    <form id="stationary-upload-form" class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                        <div>
+                            <label for="other-name" class="block text-sm font-medium text-slate-700 mb-1">Item Name</label>
+                            <input type="text" id="other-name" placeholder="e.g., Lab Equipment" required class="w-full px-4 py-3 border border-slate-300 rounded-lg">
+                        </div>
+                        <div>
+                            <label for="other-quantity" class="block text-sm font-medium text-slate-700 mb-1">Quantity</label>
+                            <input type="number" id="other-quantity" min="1" required class="w-full px-4 py-3 border border-slate-300 rounded-lg">
+                        </div>
+                        <div class="md:col-span-2">
+                            <label for="other-desc" class="block text-sm font-medium text-slate-700 mb-1">Description</label>
+                            <textarea id="other-desc" rows="1" placeholder="Item description or specifications..." class="w-full px-4 py-3 border border-slate-300 rounded-lg"></textarea>
+                        </div>
+                        <div class="md:col-span-4 flex justify-end">
+                           <button type="submit" class="bg-teal-600 text-white font-semibold py-3 px-6 rounded-lg shadow-lg hover:bg-teal-700 transition">Add Item</button>
+                        </div>
+                    </form>
+                </div>
+
+                <div>
+                    <h3 class="text-3xl font-bold text-slate-800 mb-6">Uploaded Stationary</h3>
+                    <div class="bg-white rounded-lg card-clean border overflow-x-auto">
+                        <table class="min-w-full divide-y">
+                            <thead class="bg-slate-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Name</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Description</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Quantity</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="stationary-upload-table-body" class="bg-white divide-y divide-slate-100">
+                                </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
         </main>
     </div>
 
@@ -472,14 +527,38 @@
     <script>
     document.addEventListener('DOMContentLoaded', () => {
         // --- DATA DEFINITIONS ---
+        // ITEM RENAME UPDATE: Renamed all categories
         const DEPARTMENTS = ['CIV', 'EEE', 'MEC', 'ECE', 'CSE', 'CAI', 'CSM', 'CSE DS', 'CS', 'IT'];
-        const RAW_CATEGORIES = ['PCs', 'Tables', 'Benches', 'Chairs', 'Boards', 'Projectors', 'ACs', 'Fans', 'Lights', 'CC Cameras', 'Keyboards', 'Mouse', 'Pens', 'Chalks', 'Pencils', 'Logbooks', 'Books', 'Papers'];
-        const GROUPED_CATEGORIES = ['PCs', 'Tables', 'Benches', 'Chairs', 'Boards', 'Projectors', 'ACs', 'Fans', 'Lights', 'CC Cameras', 'Keyboards', 'Mouse', 'Logbooks', 'Stationery Set'];
-        const CONSUMABLES = ['Pens', 'Chalks', 'Pencils', 'Books', 'Papers'];
+        const RAW_CATEGORIES = [
+            'Stationary 1', 'Stationary 2', 'Stationary 3', 'Stationary 4', 
+            'Stationary 5', 'Stationary 6', 'Stationary 7', 'Stationary 8', 
+            'Stationary 9', 'Stationary 10', 'Stationary 11', 'Stationary 12', 
+            'Stationary 13', 'Stationary 14'
+        ];
+        // Make RAW_CATEGORIES identical to GROUPED_CATEGORIES, removing old consumable logic
+        const GROUPED_CATEGORIES = RAW_CATEGORIES;
+        const CONSUMABLES = []; // This logic is no longer needed
         const STATUS_OPTIONS = ['Working', 'Not Working', 'Under Repair', 'Discarded'];
-        const BRANDS = { PCs: ['HP', 'Dell', 'Asus', 'Lenovo'], Chairs: ['Godrej', 'Nilkamal', 'Local'], Projectors: ['Epson', 'BenQ'], Logbooks: ['Generic'], Pens: ['Generic', 'Pilot'], Chalks: ['Generic'], Pencils: ['Apsara', 'Natraj'], Books: ['Generic'], Papers: ['A4'] };
+        // Map old brands to new stationary names
+        const BRANDS = { 
+            'Stationary 1': ['HP', 'Dell', 'Asus', 'Lenovo'], // Was PCs
+            'Stationary 2': ['Generic'], // Was Tables
+            'Stationary 3': ['Generic'], // Was Benches
+            'Stationary 4': ['Godrej', 'Nilkamal', 'Local'], // Was Chairs
+            'Stationary 5': ['Generic'], // Was Boards
+            'Stationary 6': ['Epson', 'BenQ'], // Was Projectors
+            'Stationary 7': ['Generic'], // Was ACs
+            'Stationary 8': ['Generic'], // Was Fans
+            'Stationary 9': ['Generic'], // Was Lights
+            'Stationary 10': ['Generic'], // Was CC Cameras
+            'Stationary 11': ['Generic'], // Was Keyboards
+            'Stationary 12': ['Generic'], // Was Mouse
+            'Stationary 13': ['Generic'], // Was Logbooks
+            'Stationary 14': ['Generic']  // Was Stationery Set
+        };
         
         let appData = {}, assignmentHistory = [], requestsLog = [], indentsLog = [];
+        let othersData = []; // OTHERS UPDATE: New data array
         let currentUserRole = null, departmentChart = null, categoryChart = null;
         let state = { currentView: 'departments-view', department: null, category: null, searchText: '', filterStatus: 'All', selectedItems: new Set() };
         
@@ -491,9 +570,9 @@
         const views = document.querySelectorAll('.view');
         
         // --- DATA PERSISTENCE ---
-        // *** THIS IS THE DATA FIX ***
         const loadData = () => {
-            const storedData = localStorage.getItem('collegeAssetData');
+            // *** DATA FIX: Change this key to force a refresh ***
+            const storedData = localStorage.getItem('collegeAssetData_v2'); 
             const storedHistory = localStorage.getItem('assignmentHistory');
             const storedRequests = localStorage.getItem('requestsLog');
             const storedIndents = localStorage.getItem('indentsLog');
@@ -504,32 +583,67 @@
                 appData = generateMockData(); // Assign the return value
             }
             
-            assignmentHistory = JSON.parse(storedHistory) || [];
-            requestsLog = JSON.parse(storedRequests) || [];
-            indentsLog = JSON.parse(storedIndents) || [];
+            // *** DATA FIX: Check if logs are empty and if so, load mock data ***
+            assignmentHistory = JSON.parse(storedHistory) || (appData && generateMockHistory());
+            requestsLog = JSON.parse(storedRequests) || (appData && generateMockRequests());
+            indentsLog = JSON.parse(storedIndents) || (appData && generateMockIndents());
+            othersData = JSON.parse(localStorage.getItem('stationaryUploadData')) || []; // RENAMED
         };
-        const saveData = () => localStorage.setItem('collegeAssetData', JSON.stringify(appData));
-        const saveHistory = () => localStorage.setItem('assignmentHistory', JSON.stringify(assignmentHistory));
-        const saveRequests = () => localStorage.setItem('requestsLog', JSON.stringify(requestsLog));
-        const saveIndents = () => localStorage.setItem('indentsLog', JSON.stringify(indentsLog));
+        const saveData = () => {
+            // *** DATA FIX: Change this key ***
+            localStorage.setItem('collegeAssetData_v2', JSON.stringify(appData));
+            localStorage.setItem('assignmentHistory', JSON.stringify(assignmentHistory));
+            localStorage.setItem('requestsLog', JSON.stringify(requestsLog));
+            localStorage.setItem('indentsLog', JSON.stringify(indentsLog));
+            localStorage.setItem('stationaryUploadData', JSON.stringify(othersData)); // RENAMED
+        };
 
         const generateMockData = () => {
             let newData = {}; // Use a local variable
             DEPARTMENTS.forEach(dept => {
                 newData[dept] = {};
+                // ITEM RENAME UPDATE: Use new RAW_CATEGORIES
                 RAW_CATEGORIES.forEach(cat => {
-                    const isConsumable = CONSUMABLES.includes(cat);
-                    const count = Math.floor(Math.random() * 50) + (isConsumable ? 100 : 10);
+                    const count = Math.floor(Math.random() * 50) + 10; // Simplified count
                     newData[dept][cat] = Array.from({ length: count }, (_, i) => {
                         const brandList = BRANDS[cat] || ['Generic'];
-                        return { id: `${dept}-${cat.slice(0,2).toUpperCase()}-${String(i+1).padStart(3,'0')}`, name: cat, location: `Lab ${Math.floor(Math.random() * 5) + 401}`, brand: brandList[Math.floor(Math.random() * brandList.length)], quantity: isConsumable ? Math.floor(Math.random() * 20) + 1 : 1, status: STATUS_OPTIONS[Math.floor(Math.random() * STATUS_OPTIONS.length)] };
+                        return { id: `${dept}-${cat.slice(0,2).toUpperCase()}-${String(i+1).padStart(3,'0')}`, name: cat, location: `Lab ${Math.floor(Math.random() * 5) + 401}`, brand: brandList[Math.floor(Math.random() * brandList.length)], quantity: 1, status: STATUS_OPTIONS[Math.floor(Math.random() * STATUS_OPTIONS.length)] };
                     });
                 });
             });
-            localStorage.setItem('collegeAssetData', JSON.stringify(newData)); // Save directly
+            // *** DATA FIX: Change this key ***
+            localStorage.setItem('collegeAssetData_v2', JSON.stringify(newData)); // Save directly
             return newData; // Return the generated data
         };
-        // *** END OF DATA FIX ***
+
+        // --- DATA FIX: Functions to generate mock logs ---
+        const generateMockRequests = () => {
+            let mockLogs = [
+                {id: 1, date: "01/10/2025", department: "cse", item: "Stationary 11", quantity: 10, status: "Pending"},
+                {id: 2, date: "02/10/2025", department: "civ", item: "Stationary 4", quantity: 5, status: "Approved"},
+                {id: 3, date: "03/10/2025", department: "cse", item: "Stationary 6", quantity: 1, status: "Rejected"},
+            ];
+            localStorage.setItem('requestsLog', JSON.stringify(mockLogs));
+            return mockLogs;
+        };
+        const generateMockHistory = () => {
+            let mockHistory = [
+                {id: 2, date: "02/10/2025", department: "civ", item: "Stationary 4", quantity: 5, status: "Approved"}
+            ];
+            localStorage.setItem('assignmentHistory', JSON.stringify(mockHistory));
+            return mockHistory;
+        };
+        const generateMockIndents = () => {
+            let mockIndents = [
+                {id: "IND-123456", date: "01/10/2025", department: "cse", orderedBy: "User", items: [{item: "Stationary 1", quantity: "5"}, {item: "Stationary 13", quantity: "20"}], status: "Pending"},
+                {id: "IND-123457", date: "02/10/2025", department: "cse", orderedBy: "User", items: [{item: "Stationary 4", quantity: "10"}], status: "In Progress", itemStatus: "Partial", approvedQty: "5"},
+                {id: "IND-123458", date: "28/09/2025", department: "cse", orderedBy: "User", items: [{item: "Stationary 8", quantity: "2"}], status: "Solved", itemStatus: "Approved", approvedQty: "2"},
+            ];
+            localStorage.setItem('indentsLog', JSON.stringify(mockIndents));
+            return mockIndents;
+        };
+        // --- END DATA FIX ---
+
 
         // --- AUTHENTICATION & NAVIGATION ---
         const handleLogin = (e) => {
@@ -568,13 +682,14 @@
 
         const updateBreadcrumb = () => {
             let path = '';
-            // UPDATED: Added 'indent-review-view' to the list
-            if (currentUserRole === 'Admin' && !['assign-view', 'requests-view', 'indent-status-view', 'indent-form-view', 'indent-options-view', 'indent-review-view'].includes(state.currentView)) path = '<span class="text-teal-600 font-bold">Dashboard</span>';
+            // RENAMED: 'others-view' -> 'stationary-upload-view'
+            if (currentUserRole === 'Admin' && !['assign-view', 'requests-view', 'indent-status-view', 'indent-form-view', 'indent-options-view', 'indent-review-view', 'stationary-upload-view'].includes(state.currentView)) path = '<span class="text-teal-600 font-bold">Dashboard</span>';
             if (state.department && currentUserRole === 'User') path = '<span class="text-teal-600 font-bold">Dashboard</span>'
             if (state.department && currentUserRole === 'Admin') path += ` / <span class="text-slate-700">${state.department}</span>`;
             if (state.currentView === 'assign-view') path += ' / <span class="text-slate-900 font-bold">Request Item</span>';
             if (state.currentView === 'requests-view') path += ' / <span class="text-slate-900 font-bold">View Requests</span>';
             if (state.currentView.startsWith('indent-')) path += ' / <span class="text-slate-900 font-bold">Indent</span>';
+            if (state.currentView === 'stationary-upload-view') path += ' / <span class="text-slate-900 font-bold">Upload Stationary</span>';
             if (state.category) path += ` / <span class="text-slate-900 font-bold">${state.category}</span>`;
             breadcrumbEl.innerHTML = path.startsWith(' / ') ? path.substring(3) : path;
         };
@@ -590,7 +705,8 @@
         };
         
         // --- DATA HELPERS ---
-        const getCategoryAssets = (dept, cat) => (cat === 'Stationery Set') ? CONSUMABLES.flatMap(c => appData[dept]?.[c] || []) : appData[dept]?.[cat] || [];
+        // ITEM RENAME UPDATE: Removed special 'Stationery Set' logic
+        const getCategoryAssets = (dept, cat) => appData[dept]?.[cat] || [];
         const findAssetReference = (id) => {
             for (const dept in appData) {
                 for (const cat in appData[dept]) {
@@ -652,55 +768,28 @@
         const renderTable = (assets) => {
             const tbody = document.getElementById('asset-table-body');
             const isAdmin = currentUserRole === 'Admin';
-            const isStationery = state.category === 'Stationery Set';
+            // ITEM RENAME UPDATE: Removed 'isStationery' logic
             ['admin-actions-bar', 'select-all-header', 'action-header'].forEach(id => document.getElementById(id).style.display = isAdmin ? '' : 'none');
             document.getElementById('admin-click-hint').style.display = isAdmin ? 'inline' : 'none';
-            ['item-id-header', 'location-header', 'brand-model-header', 'condition-header'].forEach(id => document.getElementById(id).style.display = isStationery ? 'none' : '');
-            document.getElementById('item-name-header').style.display = isStationery ? '' : 'none';
-            if(isAdmin && isStationery) document.getElementById('action-header').style.display = 'none';
-            tbody.innerHTML = '';
+            ['item-id-header', 'location-header', 'brand-model-header', 'condition-header'].forEach(id => document.getElementById(id).style.display = '');
+            document.getElementById('item-name-header').style.display = 'none';
             
-            // --- UPDATE 3: Start ---
-            // If it's stationery, group items by name and sum quantity
-            if (isStationery) {
-                const summary = {};
-                assets.forEach(asset => {
-                    if (!summary[asset.name]) {
-                        summary[asset.name] = 0;
-                    }
-                    summary[asset.name] += asset.quantity;
-                });
+            tbody.innerHTML = '';
 
-                if (Object.keys(summary).length === 0) {
-                    tbody.innerHTML = `<tr><td colspan="2" class="text-center py-8 text-slate-500">No assets found.</td></tr>`;
-                    return;
-                }
-
-                Object.entries(summary).forEach(([name, quantity]) => {
-                    const row = document.createElement('tr');
-                    row.className = 'hover:bg-slate-50';
-                    row.innerHTML = `
-                        <td class="px-6 py-4 font-medium">${name}</td>
-                        <td class="px-6 py-4">${quantity}</td>
-                    `;
-                    tbody.appendChild(row);
-                });
-                return; // Stop here for stationery
-            }
-            // --- UPDATE 3: End ---
-
+            // ITEM RENAME UPDATE: Removed the 'isStationery' check here
             if (assets.length === 0) { tbody.innerHTML = `<tr><td colspan="8" class="text-center py-8 text-slate-500">No assets found.</td></tr>`; return; }
             assets.forEach(asset => {
                 const isSelected = state.selectedItems.has(asset.id);
                 const row = document.createElement('tr');
-                row.className = `transition ${isAdmin && !isStationery ? 'table-row-clickable hover:bg-teal-50' : 'hover:bg-slate-50'} ${isSelected ? 'bg-teal-100' : ''}`;
+                row.className = `transition ${isAdmin ? 'table-row-clickable hover:bg-teal-50' : 'hover:bg-slate-50'} ${isSelected ? 'bg-teal-100' : ''}`;
                 const statusColor = asset.status === 'Working' ? 'text-green-700 bg-green-100' : asset.status === 'Not Working' ? 'text-red-700 bg-red-100' : 'text-amber-700 bg-amber-100';
-                row.innerHTML = `${isAdmin ? `<td class="px-6 py-4 text-center"><input type="checkbox" data-item-id="${asset.id}" class="row-checkbox" ${isSelected ? 'checked' : ''}></td>` : ''}<td class="px-6 py-4 font-semibold" style="display:${isStationery ? 'none' : ''}">${asset.id}</td><td class="px-6 py-4" style="display:${isStationery ? 'none' : ''}">${asset.location}</td><td class="px-6 py-4" style="display:${isStationery ? 'none' : ''}">${asset.brand}</td><td class="px-6 py-4 font-medium" style="display:${isStationery ? '' : 'none'}">${asset.name}</td><td class="px-6 py-4" style="display:${isStationery ? 'none' : ''}"><span class="px-3 py-1 text-xs font-bold rounded-full ${statusColor}">${asset.status}</span></td><td class="px-6 py-4">${asset.quantity}</td>${isAdmin && !isStationery ? `<td class="px-6 py-4 text-center"><button data-asset-id="${asset.id}" class="delete-item-btn text-red-600 font-semibold text-sm">Delete</button></td>` : ''}`;
+                // ITEM RENAME UPDATE: Removed style="display:none" etc. from table cells
+                row.innerHTML = `${isAdmin ? `<td class="px-6 py-4 text-center"><input type="checkbox" data-item-id="${asset.id}" class="row-checkbox" ${isSelected ? 'checked' : ''}></td>` : ''}<td class="px-6 py-4 font-semibold">${asset.id}</td><td class="px-6 py-4">${asset.location}</td><td class="px-6 py-4">${asset.brand}</td><td class="px-6 py-4"><span class="px-3 py-1 text-xs font-bold rounded-full ${statusColor}">${asset.status}</span></td><td class="px-6 py-4">${asset.quantity}</td>${isAdmin ? `<td class="px-6 py-4 text-center"><button data-asset-id="${asset.id}" class="delete-item-btn text-red-600 font-semibold text-sm">Delete</button></td>` : ''}`;
                 tbody.appendChild(row);
                 if (isAdmin) {
                     row.querySelector('.row-checkbox')?.addEventListener('change', (e) => toggleItemSelection(e, asset.id));
                     row.querySelector('.delete-item-btn')?.addEventListener('click', (e) => { e.stopPropagation(); openModal('delete', asset); });
-                    if (!isStationery) row.addEventListener('click', (e) => { if (!e.target.closest('input, button')) openModal('edit', asset); });
+                    row.addEventListener('click', (e) => { if (!e.target.closest('input, button')) openModal('edit', asset); });
                 }
             });
             document.getElementById('select-all-checkbox').checked = false;
@@ -710,10 +799,9 @@
         const showAssignView = () => {
             const deptGroup = document.getElementById('assign-department-group');
             const deptSelect = document.getElementById('assign-department');
-            // --- UPDATE 1: Populate item dropdown ---
+            // ITEM RENAME UPDATE: Populate item dropdown
             const itemSelect = document.getElementById('assign-item');
             itemSelect.innerHTML = `<option value="" disabled selected>Select an item</option>` + RAW_CATEGORIES.map(c => `<option value="${c}">${c}</option>`).join('');
-            // --- END UPDATE 1 ---
             
             if (currentUserRole === 'Admin') { 
                 deptGroup.style.display = 'block'; 
@@ -739,17 +827,12 @@
             };
             if (isRequest) {
                 requestsLog.unshift(newEntry);
-                saveRequests();
+                saveData(); // Use main save function
                 showToast('Request submitted successfully!');
             } else { // Admin direct assignment
                 assignmentHistory.unshift(newEntry);
-                saveHistory();
-                
-                // --- UPDATE 2: Add to requestsLog as well ---
                 requestsLog.unshift(newEntry);
-                saveRequests();
-                // --- END UPDATE 2 ---
-
+                saveData(); // Use main save function
                 showToast('Assignment logged successfully!');
             }
             document.getElementById('assign-form').reset();
@@ -816,9 +899,8 @@
             request.status = action;
             if (action === 'Approved') {
                 assignmentHistory.unshift({ ...request });
-                saveHistory();
             }
-            saveRequests();
+            saveData(); // Use main save function
             showRequestsView();
             showToast(`Request has been ${action.toLowerCase()}!`);
         };
@@ -837,7 +919,7 @@
             const tbody = document.getElementById('indent-items-table');
             const row = document.createElement('tr');
             const serialNumber = tbody.children.length + 1;
-            // UPDATE: Changed text input to select dropdown
+            // ITEM RENAME UPDATE: Populate dropdown with new categories
             row.innerHTML = `
                 <td class="px-4 py-2 serial-number">${serialNumber}</td>
                 <td class="px-4 py-2">
@@ -884,7 +966,7 @@
                 status: 'Pending'
             };
             indentsLog.unshift(newIndent);
-            saveIndents();
+            saveData(); // Use main save function
             showToast('Indent submitted successfully!');
             navigate('user-dashboard-view');
         };
@@ -1001,7 +1083,7 @@
                 });
             }
             
-            saveIndents();
+            saveData(); // Use main save function
             showToast(`Indent status updated to "${newStatus}"!`);
             renderIndentStatusView();
         };
@@ -1069,26 +1151,76 @@
             // If all items are rejected, mark the whole indent as Rejected
             indent.status = allRejected ? 'Rejected' : 'In Progress';
             
-            saveIndents();
+            saveData(); // Use main save function
             showToast('Indent processed successfully!');
             renderIndentStatusView();
             navigate('indent-status-view');
         };
+
+        // --- RENAMED: "Others" Functions ---
+        const renderStationaryUploadPage = () => {
+            const tbody = document.getElementById('stationary-upload-table-body');
+            tbody.innerHTML = '';
+            if (othersData.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="4" class="text-center py-8 text-slate-500">No "Other" items have been added yet.</td></tr>`;
+                return;
+            }
+            
+            othersData.forEach(item => {
+                const row = document.createElement('tr');
+                row.className = 'hover:bg-slate-50';
+                row.innerHTML = `
+                    <td class="px-6 py-4 font-semibold">${item.name}</td>
+                    <td class="px-6 py-4 text-sm text-slate-600">${item.desc}</td>
+                    <td class="px-6 py-4">${item.quantity}</td>
+                    <td class="px-6 py-4">
+                        <button data-id="${item.id}" class="delete-other-btn text-red-600 font-semibold text-sm">Delete</button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        };
+
+        const handleStationaryUploadSubmit = (e) => {
+            e.preventDefault();
+            const newItem = {
+                id: `OTHER-${Date.now()}`,
+                name: document.getElementById('other-name').value,
+                quantity: document.getElementById('other-quantity').value,
+                image: '', // Image field removed
+                desc: document.getElementById('other-desc').value
+            };
+            
+            othersData.unshift(newItem);
+            saveData();
+            showToast('New item added successfully!');
+            document.getElementById('stationary-upload-form').reset();
+            renderStationaryUploadPage();
+        };
+
+        const handleStationaryUploadDelete = (id) => {
+            if (confirm('Are you sure you want to delete this item?')) {
+                othersData = othersData.filter(item => item.id !== id);
+                saveData();
+                showToast('Item deleted.');
+                renderStationaryUploadPage();
+            }
+        };
+        // --- END OTHERS UPDATE ---
+
 
         // --- MODAL & FORM LOGIC ---
         const openModal = (operation, asset = null) => {
             const form = document.getElementById('asset-form'); form.reset();
             document.getElementById('modal-operation').value = operation;
             document.getElementById('delete-message').classList.add('hidden');
-            const isStationery = state.category === 'Stationery Set';
-            document.getElementById('asset-name-group').style.display = isStationery ? '' : 'none';
-            if(isStationery) document.getElementById('asset-name').innerHTML = CONSUMABLES.map(c => `<option value="${c}">${c}</option>`).join('');
+            // BUG FIX: Removed 'isStationery' logic
+            document.getElementById('asset-name-group').style.display = 'none';
             form.querySelectorAll('input, select').forEach(el => el.disabled = false);
             if (operation === 'add') {
                 document.getElementById('modal-title').textContent = 'Add New Asset'; document.getElementById('modal-submit-btn').textContent = 'Save Record';
             } else {
                 document.getElementById('asset-original-id').value = asset.id; document.getElementById('asset-id').value = asset.id; document.getElementById('asset-location').value = asset.location; document.getElementById('asset-brand').value = asset.brand; document.getElementById('asset-status').value = asset.status; document.getElementById('asset-quantity').value = asset.quantity;
-                if(isStationery) document.getElementById('asset-name').value = asset.name;
                 if (operation === 'edit') {
                     document.getElementById('modal-title').textContent = `Edit Asset: ${asset.id}`; document.getElementById('modal-submit-btn').textContent = 'Update Record'; document.getElementById('asset-id').disabled = true;
                 } else {
@@ -1102,13 +1234,13 @@
             e.preventDefault();
             const operation = document.getElementById('modal-operation').value;
             const originalId = document.getElementById('asset-original-id').value;
-            const isStationery = state.category === 'Stationery Set';
+            // BUG FIX: Removed 'isStationery' logic
             if (operation === 'delete') {
                 const ref = findAssetReference(originalId);
                 if (ref) appData[ref.dept][ref.cat].splice(ref.index, 1);
             } else {
-                const assetData = { id: document.getElementById('asset-id').value, location: document.getElementById('asset-location').value, brand: document.getElementById('asset-brand').value, status: document.getElementById('asset-status').value, quantity: parseInt(document.getElementById('asset-quantity').value), name: isStationery ? document.getElementById('asset-name').value : state.category };
-                const targetCategory = CONSUMABLES.includes(assetData.name) ? assetData.name : state.category;
+                const assetData = { id: document.getElementById('asset-id').value, location: document.getElementById('asset-location').value, brand: document.getElementById('asset-brand').value, status: document.getElementById('asset-status').value, quantity: parseInt(document.getElementById('asset-quantity').value), name: state.category };
+                const targetCategory = state.category; // Simplified
                 if (operation === 'add') {
                     if (!appData[state.department][targetCategory]) appData[state.department][targetCategory] = [];
                     appData[state.department][targetCategory].push(assetData);
@@ -1161,7 +1293,6 @@
             departmentChart = new Chart(ctx, { type: 'bar', data: { labels: GROUPED_CATEGORIES, datasets: [{ label: 'Total Assets', data: GROUPED_CATEGORIES.map(cat => categoryCounts[cat] || 0), backgroundColor: 'rgba(20, 184, 166, 0.8)' }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } } });
         };
         
-        // UPDATE 2: Changed Pie Chart to show Condition
         const renderCategoryChart = (assets) => {
             document.getElementById('category-chart-title').textContent = "Condition Composition"; // Update title
             const ctx = document.getElementById('category-chart').getContext('2d');
@@ -1189,52 +1320,21 @@
         };
         
         const exportToExcel = (data, filename) => {
-            // Helper function to find asset details (unchanged)
-            const findAssetDetails = (id) => {
-                for (const dept in appData) {
-                    for (const cat in appData[dept]) {
-                        const asset = appData[dept][cat].find(a => a.id === id);
-                        if (asset) return { Department: dept, Category: cat };
-                    }
-                }
-                const ref = findAssetReference(id); // Use original function as fallback
-                if (ref) return { Department: ref.dept, Category: ref.cat };
-                return { Department: 'N/A', Category: 'N/A' };
-            };
-            
-            // --- UPDATED (Excel Export for Stationery) ---
             let excelData;
-            if (state.category === 'Stationery Set') {
-                // For stationery, use the grouped summary
-                const summary = {};
-                data.forEach(asset => {
-                    if (!summary[asset.name]) {
-                        summary[asset.name] = 0;
-                    }
-                    summary[asset.name] += asset.quantity;
-                });
-                excelData = Object.entries(summary).map(([name, quantity]) => ({
-                    Department: state.department,
-                    Category: state.category,
-                    ItemName: name,
-                    Quantity: quantity
-                }));
-            } else {
-                // For other items, use the detailed list
-                excelData = data.map(asset => {
-                    const details = findAssetDetails(asset.id);
-                    return { 
-                        Department: details.Department, 
-                        Category: details.Category, 
-                        ItemID: asset.id,
-                        Location: asset.location,
-                        BrandModel: asset.brand,
-                        ItemName: asset.name,
-                        Condition: asset.status,
-                        Quantity: asset.quantity
-                    };
-                });
-            }
+            // ITEM RENAME UPDATE: Removed 'isStationery' logic
+            excelData = data.map(asset => {
+                const details = findAssetReference(asset.id);
+                return { 
+                    Department: details.dept, 
+                    Category: details.cat, 
+                    ItemID: asset.id,
+                    Location: asset.location,
+                    BrandModel: asset.brand,
+                    ItemName: asset.name,
+                    Condition: asset.status,
+                    Quantity: asset.quantity
+                };
+            });
             
             const ws = XLSX.utils.json_to_sheet(excelData);
             const wb = XLSX.utils.book_new();
@@ -1244,11 +1344,10 @@
         
         // --- EVENT LISTENERS ---
         document.getElementById('download-all-btn').addEventListener('click', () => { 
-            const allAssets = getCategoryAssets(state.department, state.category);
-            exportToExcel(allAssets, `${state.department}_${state.category}_All.xlsx`); 
+            const allAssets = Object.values(appData).flatMap(dept => Object.values(dept).flat());
+            exportToExcel(allAssets, "Full_Inventory.xlsx"); 
         });
         
-        // UPDATE 3: Download Current View (Filtered)
         document.getElementById('download-current-btn').addEventListener('click', () => { 
             const allAssets = getCategoryAssets(state.department, state.category);
             const filtered = allAssets.filter(asset => {
@@ -1278,7 +1377,7 @@
         document.getElementById('bulk-cancel-btn').addEventListener('click', () => document.getElementById('bulk-action-modal').style.display = 'none');
         document.getElementById('bulk-action-form').addEventListener('submit', handleBulkActionSubmit);
         
-        // --- UPDATED EVENT LISTENERS ---
+        // --- UPDATED EVENT LISTENERS (with null checks) ---
         const adminAssignBtn = document.getElementById('admin-assign-btn');
         if (adminAssignBtn) {
             adminAssignBtn.addEventListener('click', showAssignView);
@@ -1310,9 +1409,28 @@
         document.getElementById('add-indent-row-btn').addEventListener('click', addIndentRow);
         document.getElementById('indent-form').addEventListener('submit', handleIndentSubmit);
         
-        // NEW LISTENER for Indent Review page
+        // Indent Review page
         document.getElementById('back-from-indent-review').addEventListener('click', () => navigate('indent-status-view'));
         document.getElementById('indent-review-form').addEventListener('submit', handleIndentReviewSubmit);
+
+        // OTHERS UPDATE: Add event listeners
+        document.getElementById('go-to-stationary-upload-btn').addEventListener('click', () => {
+            renderStationaryUploadPage();
+            navigate('stationary-upload-view');
+        });
+        document.getElementById('admin-stationary-upload-btn').addEventListener('click', () => {
+            renderStationaryUploadPage();
+            navigate('stationary-upload-view');
+        });
+        document.getElementById('back-from-stationary-upload').addEventListener('click', () => {
+            navigate(currentUserRole === 'Admin' ? 'departments-view' : 'user-dashboard-view');
+        });
+        document.getElementById('stationary-upload-form').addEventListener('submit', handleStationaryUploadSubmit);
+        document.getElementById('stationary-upload-table-body').addEventListener('click', (e) => {
+            if (e.target.classList.contains('delete-other-btn')) {
+                handleStationaryUploadDelete(e.target.dataset.id);
+            }
+        });
 
         // --- INITIAL LOAD ---
         loadData();
