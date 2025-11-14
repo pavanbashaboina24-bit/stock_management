@@ -33,8 +33,14 @@
                 <div>
                     <input type="text" id="login-username" placeholder="Username (e.g., admin, cse, civ)" class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-teal-500 focus:border-teal-500 transition" required>
                 </div>
-                <div>
+                <div class="relative">
                     <input type="password" id="login-password" placeholder="Password" class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-teal-500 focus:border-teal-500 transition" required>
+                    <button type="button" id="toggle-password" class="absolute inset-y-0 right-0 px-4 flex items-center text-slate-400 hover:text-slate-600">
+                        <svg id="eye-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="h-5 w-5" viewBox="0 0 16 16">
+                            <path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8zM1.173 8a13.133 13.133 0 0 1 1.66-2.043C4.12 4.668 7.88 3 12 3c4.12 0 7.88 1.668 9.167 2.957A13.133 13.133 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755C11.879 11.332 8.119 13 4 13c-4.12 0-7.88-1.668-9.167-2.957A13.133 13.133 0 0 1 1.172 8z"/>
+                            <path d="M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM4.5 8a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0z"/>
+                        </svg>
+                    </button>
                 </div>
                 <button type="submit" class="w-full bg-teal-600 text-white font-semibold py-3 px-6 rounded-lg shadow-lg shadow-teal-500/30 hover:bg-teal-700 transition transform hover:scale-[1.03]">
                     Secure Login
@@ -71,8 +77,8 @@
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                     <button id="go-to-inventory-btn" class="bg-white p-8 rounded-lg card-clean border hover:border-teal-500 cursor-pointer text-center flex flex-col items-center justify-center">
                         <span class="text-5xl mb-4">🗃️</span>
-                        <h3 class="text-xl font-bold text-slate-900">View Inventory</h3>
-                        <p class="text-sm text-slate-500 mt-1">Browse and manage assets</p>
+                        <h3 class="text-xl font-bold text-slate-900">View Stationary</h3>
+                        <p class="text-sm text-slate-500 mt-1">Browse stationary stock</p>
                     </button>
                     <button id="user-requests-btn" class="bg-white p-8 rounded-lg card-clean border hover:border-teal-500 cursor-pointer text-center flex flex-col items-center justify-center">
                          <span class="text-5xl mb-4">📊</span>
@@ -87,14 +93,14 @@
                     <button id="go-to-stationary-upload-btn" class="bg-white p-8 rounded-lg card-clean border hover:border-teal-500 cursor-pointer text-center flex flex-col items-center justify-center">
                         <span class="text-5xl mb-4">📦</span>
                         <h3 class="text-xl font-bold text-slate-900">Upload Stationary</h3>
-                        <p class="text-sm text-slate-500 mt-1">Manage custom items</p>
+                        <p class="text-sm text-slate-500 mt-1">Request new items</p>
                     </button>
                 </div>
             </section>
 
             <section id="departments-view" class="view">
                 <div class="mb-10">
-                    <h2 class="text-3xl font-bold text-slate-800">Select Departmental Inventory</h2>
+                    <h2 class="text-3xl font-bold text-slate-800">Select Departmental Stationary</h2>
                     <p class="text-slate-600 mt-2">Choose a department to begin your analysis.</p>
                 </div>
                 <div id="admin-dashboard-buttons" class="mb-10 p-4 bg-slate-100 rounded-lg" style="display: none;">
@@ -436,12 +442,12 @@
                     <button id="back-from-stationary-upload" class="text-base font-semibold text-teal-600 hover:text-teal-800 transition flex items-center mb-6">
                         <span class="mr-1 text-xl">←</span> Back to Dashboard
                     </button>
-                    <h2 class="text-4xl font-extrabold text-slate-900">Upload New Stationary</h2>
-                    <p class="text-slate-600 mt-2">Add or remove custom items for all departments.</p>
+                    <h2 id="stationary-upload-title" class="text-4xl font-extrabold text-slate-900">Upload New Stationary</h2>
+                    <p id="stationary-upload-desc" class="text-slate-600 mt-2">Request new stationary items to be approved by the admin.</p>
                 </div>
 
-                <div class="bg-white p-6 rounded-lg card-clean border mb-12">
-                    <h3 class="text-2xl font-bold text-slate-800 mb-6">Add New Item</h3>
+                <div id="stationary-upload-form-container" class="bg-white p-6 rounded-lg card-clean border mb-12">
+                    <h3 class="text-2xl font-bold text-slate-800 mb-6">Add New Stationary Request</h3>
                     <form id="stationary-upload-form" class="grid grid-cols-1 md:grid-cols-4 gap-6">
                         <div>
                             <label for="other-name" class="block text-sm font-medium text-slate-700 mb-1">Item Name</label>
@@ -456,25 +462,44 @@
                             <textarea id="other-desc" rows="1" placeholder="Item description or specifications..." class="w-full px-4 py-3 border border-slate-300 rounded-lg"></textarea>
                         </div>
                         <div class="md:col-span-4 flex justify-end">
-                           <button type="submit" class="bg-teal-600 text-white font-semibold py-3 px-6 rounded-lg shadow-lg hover:bg-teal-700 transition">Add Item</button>
+                           <button type="submit" class="bg-teal-600 text-white font-semibold py-3 px-6 rounded-lg shadow-lg hover:bg-teal-700 transition">Submit Request</button>
                         </div>
                     </form>
                 </div>
 
-                <div>
-                    <h3 class="text-3xl font-bold text-slate-800 mb-6">Uploaded Stationary</h3>
-                    <div class="bg-white rounded-lg card-clean border overflow-x-auto">
+                <div id="stationary-pending-section" style="display: none;">
+                    <h3 class="text-3xl font-bold text-slate-800 mb-6">Pending Stationary Requests</h3>
+                    <div class="bg-white rounded-lg card-clean border overflow-x-auto mb-12">
                         <table class="min-w-full divide-y">
                             <thead class="bg-slate-50">
                                 <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Department</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Name</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Description</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Quantity</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Action</th>
                                 </tr>
                             </thead>
+                            <tbody id="stationary-pending-table-body" class="bg-white divide-y divide-slate-100">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div>
+                    <h3 id="stationary-list-title" class="text-3xl font-bold text-slate-800 mb-6">My Stationary Requests</h3>
+                    <div class="bg-white rounded-lg card-clean border overflow-x-auto">
+                        <table class="min-w-full divide-y">
+                            <thead class="bg-slate-50">
+                                <tr id="stationary-list-header-row">
+                                    <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Name</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Description</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Quantity</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Status</th>
+                                </tr>
+                            </thead>
                             <tbody id="stationary-upload-table-body" class="bg-white divide-y divide-slate-100">
-                                </tbody>
+                            </tbody>
                         </table>
                     </div>
                 </div>
@@ -491,12 +516,18 @@
                     <p class="font-semibold">⚠️ Warning:</p><p>This action is permanent and cannot be undone.</p>
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div><label for="asset-id" class="block text-sm font-medium">Asset ID</label><input type="text" id="asset-id" required class="w-full px-4 py-3 border rounded-lg"></div>
-                    <div id="asset-name-group" style="display:none;"><label for="asset-name" class="block text-sm font-medium">Item Name/Type</label><select id="asset-name" class="w-full px-4 py-3 border rounded-lg"></select></div>
-                    <div id="asset-location-group"><label for="asset-location" class="block text-sm font-medium">Location</label><input type="text" id="asset-location" class="w-full px-4 py-3 border rounded-lg"></div>
-                    <div id="asset-brand-group"><label for="asset-brand" class="block text-sm font-medium">Brand/Model</label><input type="text" id="asset-brand" class="w-full px-4 py-3 border rounded-lg"></div>
-                    <div id="asset-status-group"><label for="asset-status" class="block text-sm font-medium">Condition</label><select id="asset-status" class="w-full px-4 py-3 border rounded-lg"><option value="Working">Working</option><option value="Not Working">Not Working</option><option value="Under Repair">Under Repair</option><option value="Discarded">Discarded</option></select></div>
-                    <div><label for="asset-quantity" class="block text-sm font-medium">Quantity</label><input type="number" id="asset-quantity" min="1" required value="1" class="w-full px-4 py-3 border rounded-lg"></div>
+                    <div>
+                        <label for="asset-name-static" class="block text-sm font-medium">Particulars</label>
+                        <input type="text" id="asset-name-static" readonly class="w-full px-4 py-3 border rounded-lg bg-slate-100">
+                    </div>
+                    <div>
+                        <label for="asset-quantity" class="block text-sm font-medium">Quantity</label>
+                        <input type="number" id="asset-quantity" min="0" required class="w-full px-4 py-3 border rounded-lg">
+                    </div>
+                    <div id="asset-id-group" style="display:none;"><label for="asset-id" class="block text-sm font-medium">Asset ID</label><input type="text" id="asset-id" class="w-full px-4 py-3 border rounded-lg"></div>
+                    <div id="asset-location-group" style="display:none;"><label for="asset-location" class="block text-sm font-medium">Location</label><input type="text" id="asset-location" class="w-full px-4 py-3 border rounded-lg"></div>
+                    <div id="asset-brand-group" style="display:none;"><label for="asset-brand" class="block text-sm font-medium">Brand/Model</label><input type="text" id="asset-brand" class="w-full px-4 py-3 border rounded-lg"></div>
+                    <div id="asset-status-group" style="display:none;"><label for="asset-status" class="block text-sm font-medium">Condition</label><select id="asset-status" class="w-full px-4 py-3 border rounded-lg"><option value="Working">Working</option><option value="Not Working">Not Working</option><option value="Under Repair">Under Repair</option><option value="Discarded">Discarded</option></select></div>
                 </div>
                 <div class="flex justify-end space-x-4 pt-4">
                     <button type="button" id="cancel-modal-btn" class="bg-slate-200 font-semibold py-3 px-6 rounded-lg">Cancel</button>
@@ -505,6 +536,7 @@
             </form>
         </div>
     </div>
+    
     <div id="bulk-action-modal" class="modal-overlay" style="display: none;">
         <div class="modal-content max-w-md">
             <h3 id="bulk-modal-title" class="text-2xl font-bold mb-6">Bulk Action</h3>
@@ -527,38 +559,36 @@
     <script>
     document.addEventListener('DOMContentLoaded', () => {
         // --- DATA DEFINITIONS ---
-        // ITEM RENAME UPDATE: Renamed all categories
         const DEPARTMENTS = ['CIV', 'EEE', 'MEC', 'ECE', 'CSE', 'CAI', 'CSM', 'CSE DS', 'CS', 'IT'];
-        const RAW_CATEGORIES = [
-            'Stationary 1', 'Stationary 2', 'Stationary 3', 'Stationary 4', 
-            'Stationary 5', 'Stationary 6', 'Stationary 7', 'Stationary 8', 
-            'Stationary 9', 'Stationary 10', 'Stationary 11', 'Stationary 12', 
-            'Stationary 13', 'Stationary 14'
+        
+        // --- NEW STATIONARY LIST ---
+        const STATIONARY_LIST = [
+            "A/4 PAPER (70 GSM)", "A/4COLOURPAPER(500P)", "BELL CLIPS COLOUR", "BELL CLIPS SMALL", "BOX FILES BIG", 
+            "BOX FILES SMALL", "C D MARKERS", "CUTTERS", "TIGER D/C PAPER", "DUSTERS", "DUSTLESS CHALKPIECES WHITE", 
+            "DUSTLESS COLOUR CHALK", "ERASERS", "FEVICOL 200GMS", "FOLDERS F.S", "FOLDERS A 4", 
+            "FOLDERS P.P. A/4(150 M.C.)", "GUM STICKS MEDIUM", "GUMS 700ML CAMEL", "GUMS DAYTONE", 
+            "HIGHLITER PENS", "L FOLDERS", "LONG BOOKS (100P)A.P", "LONG BOOKS 160P. A.P", 
+            "LONG NOTE BOOK RULED(BIND)NO.5", "LONG NOTE BOOK RULED(BIND)NO.2", "LONG NOTE BOOK RULED(BIND)NO.3", 
+            "LONG NOTE BOOK RULED(BIND)NO.4", "MAHABAR 380P.BOOKS", "NOTICE BOARD PINS", "PACKING WIRE", 
+            "PENCILS", "PENS (D.F.)", "PENS (D.F.) BLACK", "PENS (D.F.) BLUE", "PENS (D.F.) RED", "PP COVERS", 
+            "PUNCHING MACHINE BIG", "PUNCHING MACHINE DOUBLE HOLE", "PVC FILES", "RUBBER BANDS (500 GMS) SPL", 
+            "SCISSORS BIG", "SHARPNER", "SHORT BOOKS", "SKETCH PENS SETS(BIG)", "SPONZE DUMPERS", 
+            "STAMP PAD INKS SMALL", "STAMP PADS MEDIUM", "STAPPLER PINS 24/6", "STAPPLER PINS NO 10", 
+            "STAPPLERS HP 45", "STAPPLERS NO 10", "STEEL SCALE LONG (METEL)", "STICK FILES A4", 
+            "SKETCH PEN PKS", "TAGS 8RL (BUNDELS)", "TAPES BIG (BRN&TRN) 200 M", "TAPES BIG(BROWN)", 
+            "THREAD (5PLY)(COTTON) (NO 2 SPL)", "WHITE FLUID(CORRECTION PEN)", "OTHERS"
         ];
-        // Make RAW_CATEGORIES identical to GROUPED_CATEGORIES, removing old consumable logic
-        const GROUPED_CATEGORIES = RAW_CATEGORIES;
-        const CONSUMABLES = []; // This logic is no longer needed
+        
+        // These old constants are now replaced by the one above
+        const RAW_CATEGORIES = STATIONARY_LIST;
+        const GROUPED_CATEGORIES = ['Stationary']; // We now only have one main category
+        const CONSUMABLES = []; 
         const STATUS_OPTIONS = ['Working', 'Not Working', 'Under Repair', 'Discarded'];
-        // Map old brands to new stationary names
-        const BRANDS = { 
-            'Stationary 1': ['HP', 'Dell', 'Asus', 'Lenovo'], // Was PCs
-            'Stationary 2': ['Generic'], // Was Tables
-            'Stationary 3': ['Generic'], // Was Benches
-            'Stationary 4': ['Godrej', 'Nilkamal', 'Local'], // Was Chairs
-            'Stationary 5': ['Generic'], // Was Boards
-            'Stationary 6': ['Epson', 'BenQ'], // Was Projectors
-            'Stationary 7': ['Generic'], // Was ACs
-            'Stationary 8': ['Generic'], // Was Fans
-            'Stationary 9': ['Generic'], // Was Lights
-            'Stationary 10': ['Generic'], // Was CC Cameras
-            'Stationary 11': ['Generic'], // Was Keyboards
-            'Stationary 12': ['Generic'], // Was Mouse
-            'Stationary 13': ['Generic'], // Was Logbooks
-            'Stationary 14': ['Generic']  // Was Stationery Set
-        };
+        const BRANDS = {}; // No longer needed
         
         let appData = {}, assignmentHistory = [], requestsLog = [], indentsLog = [];
-        let othersData = []; // OTHERS UPDATE: New data array
+        let stationaryUploadData = []; // RENAMED
+        let stationaryRequestsLog = []; // NEW: For stationary approval workflow
         let currentUserRole = null, departmentChart = null, categoryChart = null;
         let state = { currentView: 'departments-view', department: null, category: null, searchText: '', filterStatus: 'All', selectedItems: new Set() };
         
@@ -572,7 +602,7 @@
         // --- DATA PERSISTENCE ---
         const loadData = () => {
             // *** DATA FIX: Change this key to force a refresh ***
-            const storedData = localStorage.getItem('collegeAssetData_v2'); 
+            const storedData = localStorage.getItem('collegeAssetData_v3'); 
             const storedHistory = localStorage.getItem('assignmentHistory');
             const storedRequests = localStorage.getItem('requestsLog');
             const storedIndents = localStorage.getItem('indentsLog');
@@ -587,63 +617,65 @@
             assignmentHistory = JSON.parse(storedHistory) || (appData && generateMockHistory());
             requestsLog = JSON.parse(storedRequests) || (appData && generateMockRequests());
             indentsLog = JSON.parse(storedIndents) || (appData && generateMockIndents());
-            othersData = JSON.parse(localStorage.getItem('stationaryUploadData')) || []; // RENAMED
+            stationaryUploadData = JSON.parse(localStorage.getItem('stationaryUploadData')) || []; // RENAMED
+            stationaryRequestsLog = JSON.parse(localStorage.getItem('stationaryRequestsLog')) || []; // NEW
         };
         const saveData = () => {
             // *** DATA FIX: Change this key ***
-            localStorage.setItem('collegeAssetData_v2', JSON.stringify(appData));
+            localStorage.setItem('collegeAssetData_v3', JSON.stringify(appData));
             localStorage.setItem('assignmentHistory', JSON.stringify(assignmentHistory));
             localStorage.setItem('requestsLog', JSON.stringify(requestsLog));
             localStorage.setItem('indentsLog', JSON.stringify(indentsLog));
-            localStorage.setItem('stationaryUploadData', JSON.stringify(othersData)); // RENAMED
+            localStorage.setItem('stationaryUploadData', JSON.stringify(stationaryUploadData)); // RENAMED
+            localStorage.setItem('stationaryRequestsLog', JSON.stringify(stationaryRequestsLog)); // NEW
         };
 
         const generateMockData = () => {
-            let newData = {}; // Use a local variable
+            let newData = {};
             DEPARTMENTS.forEach(dept => {
-                newData[dept] = {};
-                // ITEM RENAME UPDATE: Use new RAW_CATEGORIES
-                RAW_CATEGORIES.forEach(cat => {
-                    const count = Math.floor(Math.random() * 50) + 10; // Simplified count
-                    newData[dept][cat] = Array.from({ length: count }, (_, i) => {
-                        const brandList = BRANDS[cat] || ['Generic'];
-                        return { id: `${dept}-${cat.slice(0,2).toUpperCase()}-${String(i+1).padStart(3,'0')}`, name: cat, location: `Lab ${Math.floor(Math.random() * 5) + 401}`, brand: brandList[Math.floor(Math.random() * brandList.length)], quantity: 1, status: STATUS_OPTIONS[Math.floor(Math.random() * STATUS_OPTIONS.length)] };
+                newData[dept] = {
+                    'Stationary': [] // Create one single category
+                };
+                // For each item in the real list, add it to the department's stationary
+                STATIONARY_LIST.forEach((item_name, i) => {
+                    newData[dept]['Stationary'].push({
+                        id: `${dept}-ST-${String(i+1).padStart(3,'0')}`, // This ID is not really used anymore but is good practice
+                        name: item_name,
+                        quantity: Math.floor(Math.random() * 500) + 50 // Give it a random stock quantity
                     });
                 });
             });
-            // *** DATA FIX: Change this key ***
-            localStorage.setItem('collegeAssetData_v2', JSON.stringify(newData)); // Save directly
-            return newData; // Return the generated data
+            localStorage.setItem('collegeAssetData_v3', JSON.stringify(newData));
+            return newData;
         };
-
-        // --- DATA FIX: Functions to generate mock logs ---
+        
+        // --- Functions to generate mock logs ---
         const generateMockRequests = () => {
             let mockLogs = [
-                {id: 1, date: "01/10/2025", department: "cse", item: "Stationary 11", quantity: 10, status: "Pending"},
-                {id: 2, date: "02/10/2025", department: "civ", item: "Stationary 4", quantity: 5, status: "Approved"},
-                {id: 3, date: "03/10/2025", department: "cse", item: "Stationary 6", quantity: 1, status: "Rejected"},
+                {id: 1, date: "01/10/2025", department: "cse", item: "PENS (D.F.) BLUE", quantity: 10, status: "Pending"},
+                {id: 2, date: "02/10/2025", department: "civ", item: "A/4 PAPER (70 GSM)", quantity: 5, status: "Approved"},
+                {id: 3, date: "03/10/2025", department: "cse", item: "STAPPLERS HP 45", quantity: 1, status: "Rejected"},
             ];
             localStorage.setItem('requestsLog', JSON.stringify(mockLogs));
             return mockLogs;
         };
         const generateMockHistory = () => {
             let mockHistory = [
-                {id: 2, date: "02/10/2025", department: "civ", item: "Stationary 4", quantity: 5, status: "Approved"}
+                {id: 2, date: "02/10/2025", department: "civ", item: "A/4 PAPER (70 GSM)", quantity: 5, status: "Approved"}
             ];
             localStorage.setItem('assignmentHistory', JSON.stringify(mockHistory));
             return mockHistory;
         };
         const generateMockIndents = () => {
             let mockIndents = [
-                {id: "IND-123456", date: "01/10/2025", department: "cse", orderedBy: "User", items: [{item: "Stationary 1", quantity: "5"}, {item: "Stationary 13", quantity: "20"}], status: "Pending"},
-                {id: "IND-123457", date: "02/10/2025", department: "cse", orderedBy: "User", items: [{item: "Stationary 4", quantity: "10"}], status: "In Progress", itemStatus: "Partial", approvedQty: "5"},
-                {id: "IND-123458", date: "28/09/2025", department: "cse", orderedBy: "User", items: [{item: "Stationary 8", quantity: "2"}], status: "Solved", itemStatus: "Approved", approvedQty: "2"},
+                {id: "IND-123456", date: "01/10/2025", department: "cse", orderedBy: "User", items: [{item: "A/4 PAPER (70 GSM)", quantity: "5"}, {item: "LONG BOOKS (100P)A.P", quantity: "20"}], status: "Pending"},
+                {id: "IND-123457", date: "02/10/2025", department: "cse", orderedBy: "User", items: [{item: "PENS (D.F.) BLUE", quantity: "10"}], status: "In Progress", itemStatus: "Partial", approvedQty: "5"},
+                {id: "IND-123458", date: "28/09/2025", department: "cse", orderedBy: "User", items: [{item: "DUSTERS", quantity: "2"}], status: "Solved", itemStatus: "Approved", approvedQty: "2"},
             ];
             localStorage.setItem('indentsLog', JSON.stringify(mockIndents));
             return mockIndents;
         };
         // --- END DATA FIX ---
-
 
         // --- AUTHENTICATION & NAVIGATION ---
         const handleLogin = (e) => {
@@ -683,15 +715,27 @@
         const updateBreadcrumb = () => {
             let path = '';
             // RENAMED: 'others-view' -> 'stationary-upload-view'
-            if (currentUserRole === 'Admin' && !['assign-view', 'requests-view', 'indent-status-view', 'indent-form-view', 'indent-options-view', 'indent-review-view', 'stationary-upload-view'].includes(state.currentView)) path = '<span class="text-teal-600 font-bold">Dashboard</span>';
-            if (state.department && currentUserRole === 'User') path = '<span class="text-teal-600 font-bold">Dashboard</span>'
-            if (state.department && currentUserRole === 'Admin') path += ` / <span class="text-slate-700">${state.department}</span>`;
+            if (currentUserRole === 'Admin' && !['assign-view', 'requests-view', 'indent-status-view', 'indent-form-view', 'indent-options-view', 'indent-review-view', 'stationary-upload-view', 'category-detail-view'].includes(state.currentView)) path = '<span class="text-teal-600 font-bold">Dashboard</span>';
+            if (state.department && currentUserRole === 'User' && state.currentView !== 'category-detail-view') path = '<span class="text-teal-600 font-bold">Dashboard</span>'
+            if (state.department && currentUserRole === 'Admin' && state.currentView !== 'category-detail-view') path += ` / <span class="text-slate-700">${state.department}</span>`;
+            
+            if (state.currentView === 'category-detail-view') {
+                path += ` / <a href="#" id="breadcrumb-dashboard-link" class="text-teal-600 hover:text-teal-800">Dashboard</a> / <span class="text-slate-900 font-bold">${state.department} Stationary</span>`;
+            }
             if (state.currentView === 'assign-view') path += ' / <span class="text-slate-900 font-bold">Request Item</span>';
             if (state.currentView === 'requests-view') path += ' / <span class="text-slate-900 font-bold">View Requests</span>';
             if (state.currentView.startsWith('indent-')) path += ' / <span class="text-slate-900 font-bold">Indent</span>';
             if (state.currentView === 'stationary-upload-view') path += ' / <span class="text-slate-900 font-bold">Upload Stationary</span>';
-            if (state.category) path += ` / <span class="text-slate-900 font-bold">${state.category}</span>`;
+            
             breadcrumbEl.innerHTML = path.startsWith(' / ') ? path.substring(3) : path;
+            
+            const breadcrumbDashboardLink = document.getElementById('breadcrumb-dashboard-link');
+            if(breadcrumbDashboardLink) {
+                breadcrumbDashboardLink.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    navigate(currentUserRole === 'Admin' ? 'departments-view' : 'user-dashboard-view');
+                });
+            }
         };
 
         const showToast = (message, duration = 3000) => {
@@ -705,14 +749,16 @@
         };
         
         // --- DATA HELPERS ---
-        // ITEM RENAME UPDATE: Removed special 'Stationery Set' logic
+        // UPDATED: This is now simple.
         const getCategoryAssets = (dept, cat) => appData[dept]?.[cat] || [];
-        const findAssetReference = (id) => {
-            for (const dept in appData) {
-                for (const cat in appData[dept]) {
-                    const index = appData[dept][cat].findIndex(a => a.id === id);
-                    if (index !== -1) return { dept, cat, index, asset: appData[dept][cat][index] };
-                }
+        
+        // UPDATED: This now searches the new data structure
+        const findAssetReference = (itemName) => {
+            // This function is now used to find a stationary item by its *name*
+            const dept = state.department;
+            if (appData[dept] && appData[dept].Stationary) {
+                const index = appData[dept].Stationary.findIndex(a => a.name === itemName);
+                if (index !== -1) return { dept, cat: 'Stationary', index, asset: appData[dept].Stationary[index] };
             }
             return null;
         };
@@ -723,85 +769,93 @@
             const grid = document.getElementById('departments-grid');
             grid.innerHTML = '';
             DEPARTMENTS.forEach(dept => {
-                let totalAssets = GROUPED_CATEGORIES.reduce((acc, cat) => acc + getCategoryAssets(dept, cat).length, 0);
+                let totalAssets = getCategoryAssets(dept, 'Stationary').reduce((acc, item) => acc + item.quantity, 0);
                 const card = document.createElement('div');
                 card.className = 'bg-white p-6 rounded-lg card-clean border hover:border-teal-500 cursor-pointer';
-                card.innerHTML = `<h3 class="text-xl font-bold pb-2 mb-2">${dept}</h3><p class="text-3xl font-extrabold text-teal-600">${totalAssets}</p><p class="text-sm text-slate-500 mt-1 font-medium">Total Assets</p>`;
-                card.addEventListener('click', () => { state.department = dept; renderDepartmentDetail(); navigate('department-detail-view'); });
+                card.innerHTML = `<h3 class="text-xl font-bold pb-2 mb-2">${dept}</h3><p class="text-3xl font-extrabold text-teal-600">${totalAssets}</p><p class="text-sm text-slate-500 mt-1 font-medium">Total Stationary</p>`;
+                // UPDATED: This now goes directly to the item list (category-detail-view)
+                card.addEventListener('click', () => { 
+                    state.department = dept; 
+                    state.category = 'Stationary';
+                    renderCategoryDetail(); 
+                    navigate('category-detail-view'); 
+                });
                 grid.appendChild(card);
             });
         };
         
+        // This function is NO LONGER USED
         const renderDepartmentDetail = () => {
-            document.getElementById('dept-title').textContent = `${state.department} Inventory`;
-            document.getElementById('back-to-depts').style.display = currentUserRole === 'Admin' ? 'flex' : 'none';
-            document.getElementById('back-to-user-dashboard').style.display = currentUserRole === 'User' ? 'flex' : 'none';
-            const grid = document.getElementById('categories-grid');
-            grid.innerHTML = '';
-            const categoryCounts = {};
-            GROUPED_CATEGORIES.forEach(cat => {
-                const count = getCategoryAssets(state.department, cat).length;
-                categoryCounts[cat] = count;
-                const card = document.createElement('div');
-                card.className = 'bg-white p-5 rounded-lg card-clean border hover:border-teal-500 cursor-pointer';
-                card.innerHTML = `<h4 class="font-bold text-lg pb-2 mb-2">${cat}</h4><p class="text-3xl font-extrabold text-teal-600 mt-2">${count}</p><p class="text-xs uppercase font-semibold mt-1">ASSETS</p>`;
-                card.addEventListener('click', () => { state.category = cat; state.searchText = ''; document.getElementById('search-input').value = ''; state.filterStatus = 'All'; document.getElementById('status-filter').value = 'All'; state.selectedItems.clear(); renderCategoryDetail(); navigate('category-detail-view'); });
-                grid.appendChild(card);
-            });
-            renderDepartmentChart(categoryCounts);
+            console.warn("renderDepartmentDetail is deprecated. Navigating to item list instead.");
+            state.category = 'Stationary';
+            renderCategoryDetail(); 
+            navigate('category-detail-view');
         };
         
+        // This function is now the main "Stationary Stock" page
         const renderCategoryDetail = () => {
-            document.getElementById('category-title').textContent = `${state.category} Register`;
+            document.getElementById('category-title').textContent = `${state.department} Stationary Stock`;
             const allAssets = getCategoryAssets(state.department, state.category);
-            const filteredAssets = allAssets.filter(asset => {
-                const s = state.searchText.toLowerCase();
-                const searchMatch = !s || Object.values(asset).some(val => String(val).toLowerCase().includes(s));
-                const statusMatch = state.filterStatus === 'All' || asset.status === state.filterStatus;
-                return searchMatch && statusMatch;
-            });
+            
+            // This is no longer relevant
             document.getElementById('total-assets').textContent = allAssets.length;
-            renderTable(filteredAssets);
-            renderCategoryChart(allAssets);
+            
+            renderTable(allAssets);
+            
+            // This chart is no longer relevant
+            // renderCategoryChart(allAssets); 
         };
 
         const renderTable = (assets) => {
             const tbody = document.getElementById('asset-table-body');
             const isAdmin = currentUserRole === 'Admin';
-            // ITEM RENAME UPDATE: Removed 'isStationery' logic
-            ['admin-actions-bar', 'select-all-header', 'action-header'].forEach(id => document.getElementById(id).style.display = isAdmin ? '' : 'none');
-            document.getElementById('admin-click-hint').style.display = isAdmin ? 'inline' : 'none';
-            ['item-id-header', 'location-header', 'brand-model-header', 'condition-header'].forEach(id => document.getElementById(id).style.display = '');
-            document.getElementById('item-name-header').style.display = 'none';
+            
+            // Show/Hide the correct headers
+            document.getElementById('action-header').style.display = isAdmin ? '' : 'none';
+            ['item-id-header', 'location-header', 'brand-model-header', 'condition-header', 'item-name-header', 'select-all-header'].forEach(id => {
+                if (document.getElementById(id)) document.getElementById(id).style.display = 'none';
+            });
+            // Make sure the visible headers are correct (S.No, Particulars, Quantity, Action)
+            // The headers are static HTML, so we just hide the ones we don't want.
             
             tbody.innerHTML = '';
 
-            // ITEM RENAME UPDATE: Removed the 'isStationery' check here
-            if (assets.length === 0) { tbody.innerHTML = `<tr><td colspan="8" class="text-center py-8 text-slate-500">No assets found.</td></tr>`; return; }
+            if (assets.length === 0) { 
+                tbody.innerHTML = `<tr><td colspan="4" class="text-center py-8 text-slate-500">No stationary found for this department.</td></tr>`; 
+                return; 
+            }
+            
+            let serialNo = 1;
             assets.forEach(asset => {
-                const isSelected = state.selectedItems.has(asset.id);
                 const row = document.createElement('tr');
-                row.className = `transition ${isAdmin ? 'table-row-clickable hover:bg-teal-50' : 'hover:bg-slate-50'} ${isSelected ? 'bg-teal-100' : ''}`;
-                const statusColor = asset.status === 'Working' ? 'text-green-700 bg-green-100' : asset.status === 'Not Working' ? 'text-red-700 bg-red-100' : 'text-amber-700 bg-amber-100';
-                // ITEM RENAME UPDATE: Removed style="display:none" etc. from table cells
-                row.innerHTML = `${isAdmin ? `<td class="px-6 py-4 text-center"><input type="checkbox" data-item-id="${asset.id}" class="row-checkbox" ${isSelected ? 'checked' : ''}></td>` : ''}<td class="px-6 py-4 font-semibold">${asset.id}</td><td class="px-6 py-4">${asset.location}</td><td class="px-6 py-4">${asset.brand}</td><td class="px-6 py-4"><span class="px-3 py-1 text-xs font-bold rounded-full ${statusColor}">${asset.status}</span></td><td class="px-6 py-4">${asset.quantity}</td>${isAdmin ? `<td class="px-6 py-4 text-center"><button data-asset-id="${asset.id}" class="delete-item-btn text-red-600 font-semibold text-sm">Delete</button></td>` : ''}`;
+                row.className = `transition ${isAdmin ? 'table-row-clickable hover:bg-teal-50' : 'hover:bg-slate-50'}`;
+                
+                let actionButton = isAdmin ? `<td class="px-6 py-4 text-center"><button data-name="${asset.name}" class="edit-quantity-btn text-teal-600 font-semibold text-sm">Edit</button></td>` : '';
+                
+                row.innerHTML = `
+                    <td class="px-6 py-4">${serialNo++}</td>
+                    <td class="px-6 py-4 font-semibold">${asset.name}</td>
+                    <td class="px-6 py-4">${asset.quantity}</td>
+                    ${actionButton}
+                `;
                 tbody.appendChild(row);
+                
                 if (isAdmin) {
-                    row.querySelector('.row-checkbox')?.addEventListener('change', (e) => toggleItemSelection(e, asset.id));
-                    row.querySelector('.delete-item-btn')?.addEventListener('click', (e) => { e.stopPropagation(); openModal('delete', asset); });
-                    row.addEventListener('click', (e) => { if (!e.target.closest('input, button')) openModal('edit', asset); });
+                    row.querySelector('.edit-quantity-btn')?.addEventListener('click', (e) => { 
+                        e.stopPropagation(); 
+                        openModal('edit', asset); 
+                    });
                 }
             });
-            document.getElementById('select-all-checkbox').checked = false;
         };
 
         // --- ASSIGNMENT & REQUESTS ---
         const showAssignView = () => {
             const deptGroup = document.getElementById('assign-department-group');
             const deptSelect = document.getElementById('assign-department');
-            // ITEM RENAME UPDATE: Populate item dropdown
+            // UPDATED: Populate with real stationary list
             const itemSelect = document.getElementById('assign-item');
-            itemSelect.innerHTML = `<option value="" disabled selected>Select an item</option>` + RAW_CATEGORIES.map(c => `<option value="${c}">${c}</option>`).join('');
+            itemSelect.innerHTML = `<option value="" disabled selected>Select an item</option>` + STATIONARY_LIST.map(c => `<option value="${c}">${c}</option>`).join('');
             
             if (currentUserRole === 'Admin') { 
                 deptGroup.style.display = 'block'; 
@@ -919,13 +973,13 @@
             const tbody = document.getElementById('indent-items-table');
             const row = document.createElement('tr');
             const serialNumber = tbody.children.length + 1;
-            // ITEM RENAME UPDATE: Populate dropdown with new categories
+            // UPDATED: Populate dropdown with real stationary list
             row.innerHTML = `
                 <td class="px-4 py-2 serial-number">${serialNumber}</td>
                 <td class="px-4 py-2">
                     <select class="w-full p-2 border rounded-md item-input" required>
                         <option value="" disabled selected>Select an item</option>
-                        ${RAW_CATEGORIES.map(c => `<option value="${c}">${c}</option>`).join('')}
+                        ${STATIONARY_LIST.map(c => `<option value="${c}">${c}</option>`).join('')}
                     </select>
                 </td>
                 <td class="px-4 py-2"><input type="number" placeholder="Qty" min="1" class="w-full p-2 border rounded-md quantity-input" required></td>
@@ -1157,50 +1211,151 @@
             navigate('indent-status-view');
         };
 
-        // --- RENAMED: "Others" Functions ---
+        // --- UPDATED: Stationary Upload Workflow ---
         const renderStationaryUploadPage = () => {
-            const tbody = document.getElementById('stationary-upload-table-body');
-            tbody.innerHTML = '';
-            if (othersData.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="4" class="text-center py-8 text-slate-500">No "Other" items have been added yet.</td></tr>`;
-                return;
-            }
+            const isAdmin = currentUserRole === 'Admin';
             
-            othersData.forEach(item => {
-                const row = document.createElement('tr');
-                row.className = 'hover:bg-slate-50';
-                row.innerHTML = `
-                    <td class="px-6 py-4 font-semibold">${item.name}</td>
-                    <td class="px-6 py-4 text-sm text-slate-600">${item.desc}</td>
-                    <td class="px-6 py-4">${item.quantity}</td>
-                    <td class="px-6 py-4">
-                        <button data-id="${item.id}" class="delete-other-btn text-red-600 font-semibold text-sm">Delete</button>
-                    </td>
+            // Show/hide elements based on role
+            document.getElementById('stationary-upload-form-container').style.display = isAdmin ? 'none' : 'block';
+            document.getElementById('stationary-pending-section').style.display = isAdmin ? 'block' : 'none';
+            document.getElementById('stationary-upload-title').textContent = isAdmin ? 'Manage Stationary' : 'Upload New Stationary';
+            document.getElementById('stationary-upload-desc').textContent = isAdmin ? 'Approve or reject new stationary requests.' : 'Request new stationary items to be approved by the admin.';
+            document.getElementById('stationary-list-title').textContent = isAdmin ? 'Approved Stationary List' : 'My Stationary Requests';
+
+            if (isAdmin) {
+                // Admin: Render Pending Requests table
+                const pendingTbody = document.getElementById('stationary-pending-table-body');
+                pendingTbody.innerHTML = '';
+                const pendingRequests = stationaryRequestsLog.filter(r => r.status === 'Pending');
+                
+                if (pendingRequests.length === 0) {
+                    pendingTbody.innerHTML = `<tr><td colspan="5" class="text-center py-8 text-slate-500">No pending stationary requests.</td></tr>`;
+                } else {
+                    pendingRequests.forEach(req => {
+                        const row = document.createElement('tr');
+                        row.className = 'hover:bg-slate-50';
+                        row.innerHTML = `
+                            <td class="px-6 py-4 font-semibold">${req.department}</td>
+                            <td class="px-6 py-4 font-semibold">${req.name}</td>
+                            <td class="px-6 py-4 text-sm text-slate-600">${req.desc}</td>
+                            <td class="px-6 py-4">${req.quantity}</td>
+                            <td class="px-6 py-4 space-x-2">
+                                <button data-id="${req.id}" class="stationary-accept-btn bg-green-500 text-white px-3 py-1 rounded-md text-sm">Accept</button>
+                                <button data-id="${req.id}" class="stationary-reject-btn bg-red-500 text-white px-3 py-1 rounded-md text-sm">Reject</button>
+                            </td>
+                        `;
+                        pendingTbody.appendChild(row);
+                    });
+                }
+
+                // Admin: Render Approved Stationary table
+                const approvedTbody = document.getElementById('stationary-upload-table-body');
+                document.getElementById('stationary-list-header-row').innerHTML = `
+                    <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Name</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Description</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Quantity</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Action</th>
                 `;
-                tbody.appendChild(row);
-            });
+                approvedTbody.innerHTML = '';
+                if (stationaryUploadData.length === 0) {
+                    approvedTbody.innerHTML = `<tr><td colspan="4" class="text-center py-8 text-slate-500">No approved stationary items.</td></tr>`;
+                    return;
+                }
+                stationaryUploadData.forEach(item => {
+                    const row = document.createElement('tr');
+                    row.className = 'hover:bg-slate-50';
+                    row.innerHTML = `
+                        <td class="px-6 py-4 font-semibold">${item.name}</td>
+                        <td class="px-6 py-4 text-sm text-slate-600">${item.desc}</td>
+                        <td class="px-6 py-4">${item.quantity}</td>
+                        <td class="px-6 py-4">
+                            <button data-id="${item.id}" class="delete-other-btn text-red-600 font-semibold text-sm">Delete</button>
+                        </td>
+                    `;
+                    approvedTbody.appendChild(row);
+                });
+
+            } else {
+                // User: Render "My Requests" table
+                const myRequestsTbody = document.getElementById('stationary-upload-table-body');
+                document.getElementById('stationary-list-header-row').innerHTML = `
+                    <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Name</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Description</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Quantity</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Status</th>
+                `;
+                myRequestsTbody.innerHTML = '';
+                const myRequests = stationaryRequestsLog.filter(r => r.department === state.department);
+                
+                if (myRequests.length === 0) {
+                    myRequestsTbody.innerHTML = `<tr><td colspan="4" class="text-center py-8 text-slate-500">You have not made any stationary requests.</td></tr>`;
+                    return;
+                }
+                myRequests.forEach(req => {
+                    const statusColor = req.status === 'Approved' ? 'text-green-600' : req.status === 'Pending' ? 'text-yellow-600' : 'text-red-600';
+                    const row = document.createElement('tr');
+                    row.className = 'hover:bg-slate-50';
+                    row.innerHTML = `
+                        <td class="px-6 py-4 font-semibold">${req.name}</td>
+                        <td class="px-6 py-4 text-sm text-slate-600">${req.desc}</td>
+                        <td class="px-6 py-4">${req.quantity}</td>
+                        <td class="px-6 py-4 font-semibold ${statusColor}">${req.status}</td>
+                    `;
+                    myRequestsTbody.appendChild(row);
+                });
+            }
         };
 
         const handleStationaryUploadSubmit = (e) => {
             e.preventDefault();
             const newItem = {
-                id: `OTHER-${Date.now()}`,
+                id: `STATREQ-${Date.now()}`,
+                department: state.department,
                 name: document.getElementById('other-name').value,
                 quantity: document.getElementById('other-quantity').value,
                 image: '', // Image field removed
-                desc: document.getElementById('other-desc').value
+                desc: document.getElementById('other-desc').value,
+                status: 'Pending'
             };
             
-            othersData.unshift(newItem);
+            stationaryRequestsLog.unshift(newItem); // Add to the requests log
             saveData();
-            showToast('New item added successfully!');
+            showToast('New stationary request submitted!');
             document.getElementById('stationary-upload-form').reset();
+            renderStationaryUploadPage(); // Refresh the user's list
+        };
+        
+        const handleStationaryRequestAction = (id, action) => {
+            const request = stationaryRequestsLog.find(r => r.id == id); // Use == for ID
+            if (!request) return;
+
+            if (action === 'Approved') {
+                request.status = 'Approved';
+                // Add to the permanent "stationaryUploadData" list
+                const newItem = {
+                    id: request.id,
+                    name: request.name,
+                    quantity: request.quantity,
+                    desc: request.desc,
+                    image: ''
+                };
+                stationaryUploadData.unshift(newItem);
+                showToast('Request approved and item added.');
+            } else {
+                request.status = 'Rejected';
+                showToast('Request rejected.');
+            }
+            saveData();
             renderStationaryUploadPage();
         };
 
         const handleStationaryUploadDelete = (id) => {
-            if (confirm('Are you sure you want to delete this item?')) {
-                othersData = othersData.filter(item => item.id !== id);
+            if (confirm('Are you sure you want to delete this approved item? This cannot be undone.')) {
+                stationaryUploadData = stationaryUploadData.filter(item => item.id != id); // Use != for ID
+                // Optional: Also remove from the requests log
+                const request = stationaryRequestsLog.find(r => r.id == id);
+                if (request) request.status = 'Deleted/Removed';
+                
                 saveData();
                 showToast('Item deleted.');
                 renderStationaryUploadPage();
@@ -1214,43 +1369,48 @@
             const form = document.getElementById('asset-form'); form.reset();
             document.getElementById('modal-operation').value = operation;
             document.getElementById('delete-message').classList.add('hidden');
-            // BUG FIX: Removed 'isStationery' logic
+            
+            // UPDATED: This modal is only for the simple stationary list
+            document.getElementById('asset-name-static').value = asset.name;
+            document.getElementById('asset-quantity').value = asset.quantity;
+            document.getElementById('asset-original-id').value = asset.name; // Use name as the ID
+
+            document.getElementById('modal-title').textContent = `Edit Quantity for: ${asset.name}`; 
+            document.getElementById('modal-submit-btn').textContent = 'Update Quantity';
+            
+            // This logic is all hidden now
+            document.getElementById('asset-id-group').style.display = 'none';
             document.getElementById('asset-name-group').style.display = 'none';
-            form.querySelectorAll('input, select').forEach(el => el.disabled = false);
-            if (operation === 'add') {
-                document.getElementById('modal-title').textContent = 'Add New Asset'; document.getElementById('modal-submit-btn').textContent = 'Save Record';
-            } else {
-                document.getElementById('asset-original-id').value = asset.id; document.getElementById('asset-id').value = asset.id; document.getElementById('asset-location').value = asset.location; document.getElementById('asset-brand').value = asset.brand; document.getElementById('asset-status').value = asset.status; document.getElementById('asset-quantity').value = asset.quantity;
-                if (operation === 'edit') {
-                    document.getElementById('modal-title').textContent = `Edit Asset: ${asset.id}`; document.getElementById('modal-submit-btn').textContent = 'Update Record'; document.getElementById('asset-id').disabled = true;
-                } else {
-                    document.getElementById('modal-title').textContent = `Confirm Deletion: ${asset.id}`; document.getElementById('modal-submit-btn').textContent = 'Confirm Delete'; document.getElementById('delete-message').classList.remove('hidden'); form.querySelectorAll('input, select').forEach(el => el.disabled = true);
-                }
-            }
+            document.getElementById('asset-location-group').style.display = 'none';
+            document.getElementById('asset-brand-group').style.display = 'none';
+            document.getElementById('asset-status-group').style.display = 'none';
+
             document.getElementById('asset-modal').style.display = 'flex';
         };
 
         const handleFormSubmit = (e) => {
             e.preventDefault();
             const operation = document.getElementById('modal-operation').value;
-            const originalId = document.getElementById('asset-original-id').value;
-            // BUG FIX: Removed 'isStationery' logic
-            if (operation === 'delete') {
-                const ref = findAssetReference(originalId);
-                if (ref) appData[ref.dept][ref.cat].splice(ref.index, 1);
+            // UPDATED: Use name as the ID
+            const originalName = document.getElementById('asset-original-id').value;
+
+            if (operation === 'edit') {
+                const ref = findAssetReference(originalName);
+                if (ref) {
+                    ref.asset.quantity = parseInt(document.getElementById('asset-quantity').value) || 0;
+                }
             } else {
-                const assetData = { id: document.getElementById('asset-id').value, location: document.getElementById('asset-location').value, brand: document.getElementById('asset-brand').value, status: document.getElementById('asset-status').value, quantity: parseInt(document.getElementById('asset-quantity').value), name: state.category };
-                const targetCategory = state.category; // Simplified
-                if (operation === 'add') {
-                    if (!appData[state.department][targetCategory]) appData[state.department][targetCategory] = [];
-                    appData[state.department][targetCategory].push(assetData);
-                } else { const ref = findAssetReference(originalId); Object.assign(ref.asset, assetData); }
+                // 'delete' and 'add' are no longer used by this modal
+                console.warn('Unsupported operation in handleFormSubmit');
             }
-            saveData(); document.getElementById('asset-modal').style.display = 'none'; renderCategoryDetail();
-            showToast(`Asset record ${operation}ed successfully!`);
+
+            saveData(); 
+            document.getElementById('asset-modal').style.display = 'none'; 
+            renderCategoryDetail();
+            showToast(`Quantity updated successfully!`);
         };
         
-        // --- BULK ACTIONS ---
+        // --- BULK ACTIONS (Kept, but not used by new table) ---
         const toggleItemSelection = (e, id) => { if (e.target.checked) state.selectedItems.add(id); else state.selectedItems.delete(id); updateBulkActionButton(); };
         const toggleAllItems = (e) => {
             const checkboxes = document.querySelectorAll('.row-checkbox');
@@ -1262,114 +1422,78 @@
         };
         const updateBulkActionButton = () => { const btn = document.getElementById('bulk-action-btn'); btn.innerHTML = `Bulk Actions (${state.selectedItems.size})`; btn.disabled = state.selectedItems.size === 0; };
         const openBulkModal = (type) => {
-            if (state.selectedItems.size === 0) return showToast('Please select items first.');
-            const modal = document.getElementById('bulk-action-modal');
-            document.getElementById('bulk-operation-type').value = type;
-            ['bulk-status-group', 'bulk-move-group', 'bulk-delete-group'].forEach(id => document.getElementById(id).style.display = 'none');
-            if (type === 'status') { document.getElementById('bulk-modal-title').textContent = 'Bulk Change Status'; document.getElementById('bulk-status-group').style.display = 'block'; } 
-            else if (type === 'move') { document.getElementById('bulk-modal-title').textContent = 'Bulk Move Assets'; const deptSelect = document.getElementById('bulk-new-dept'); deptSelect.innerHTML = DEPARTMENTS.filter(d => d !== state.department).map(d => `<option value="${d}">${d}</option>`).join(''); document.getElementById('bulk-move-group').style.display = 'block'; } 
-            else if (type === 'delete') { document.getElementById('bulk-modal-title').textContent = 'Bulk Delete Confirmation'; document.getElementById('bulk-delete-count').textContent = state.selectedItems.size; document.getElementById('bulk-delete-group').classList.remove('hidden'); }
-            document.getElementById('bulk-item-count').textContent = state.selectedItems.size; modal.style.display = 'flex';
+           // This function is no longer used by the new table
         };
-        
         const handleBulkActionSubmit = (e) => {
             e.preventDefault();
-            const type = document.getElementById('bulk-operation-type').value;
-            state.selectedItems.forEach(id => {
-                const ref = findAssetReference(id);
-                if (!ref) return;
-                if (type === 'delete') { appData[ref.dept][ref.cat].splice(ref.index, 1); } 
-                else if (type === 'status') { ref.asset.status = document.getElementById('bulk-new-status').value; } 
-                else if (type === 'move') { const newDept = document.getElementById('bulk-new-dept').value; const movedAsset = appData[ref.dept][ref.cat].splice(ref.index, 1)[0]; if (!appData[newDept][ref.cat]) appData[newDept][ref.cat] = []; appData[newDept][ref.cat].push(movedAsset); }
-            });
-            saveData(); state.selectedItems.clear(); document.getElementById('bulk-action-modal').style.display = 'none'; showToast('Bulk action completed!');
-            if (type === 'move') { navigate('departments-view'); renderDepartments(); } else { renderCategoryDetail(); }
+            // This function is no longer connected to the new stationary table
         };
 
         // --- CHARTING & DOWNLOADS ---
         const renderDepartmentChart = (categoryCounts) => {
-            const ctx = document.getElementById('department-chart').getContext('2d');
-            if (departmentChart) departmentChart.destroy();
-            departmentChart = new Chart(ctx, { type: 'bar', data: { labels: GROUPED_CATEGORIES, datasets: [{ label: 'Total Assets', data: GROUPED_CATEGORIES.map(cat => categoryCounts[cat] || 0), backgroundColor: 'rgba(20, 184, 166, 0.8)' }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } } });
+            // This function is no longer used, but kept
         };
         
         const renderCategoryChart = (assets) => {
-            document.getElementById('category-chart-title').textContent = "Condition Composition"; // Update title
-            const ctx = document.getElementById('category-chart').getContext('2d');
-            if (categoryChart) categoryChart.destroy();
-            
-            const statusCounts = assets.reduce((acc, asset) => {
-                acc[asset.status] = (acc[asset.status] || 0) + 1; // Count items by status, not quantity
-                return acc;
-            }, {});
-
-            if (Object.keys(statusCounts).length === 0) { if(ctx) ctx.clearRect(0,0,ctx.canvas.width, ctx.canvas.height); return; }
-            
-            categoryChart = new Chart(ctx, { 
-                type: 'doughnut', 
-                data: { 
-                    labels: Object.keys(statusCounts), 
-                    datasets: [{ 
-                        data: Object.values(statusCounts), 
-                        backgroundColor: ['#10B981', '#EF4444', '#F59E0B', '#6B7280'], // Green, Red, Amber, Gray
-                        borderWidth: 4 
-                    }] 
-                }, 
-                options: { responsive: true, maintainAspectRatio: false, cutout: '70%', plugins: { legend: { position: 'right' } } } 
-            });
+            // This chart is hidden, so we do nothing
         };
         
         const exportToExcel = (data, filename) => {
-            let excelData;
-            // ITEM RENAME UPDATE: Removed 'isStationery' logic
-            excelData = data.map(asset => {
-                const details = findAssetReference(asset.id);
-                return { 
-                    Department: details.dept, 
-                    Category: details.cat, 
-                    ItemID: asset.id,
-                    Location: asset.location,
-                    BrandModel: asset.brand,
-                    ItemName: asset.name,
-                    Condition: asset.status,
-                    Quantity: asset.quantity
-                };
-            });
-            
-            const ws = XLSX.utils.json_to_sheet(excelData);
-            const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "Asset_Data");
-            XLSX.writeFile(wb, filename);
+            // This function is no longer connected to a button
         };
         
         // --- EVENT LISTENERS ---
-        document.getElementById('download-all-btn').addEventListener('click', () => { 
-            const allAssets = Object.values(appData).flatMap(dept => Object.values(dept).flat());
-            exportToExcel(allAssets, "Full_Inventory.xlsx"); 
-        });
-        
-        document.getElementById('download-current-btn').addEventListener('click', () => { 
-            const allAssets = getCategoryAssets(state.department, state.category);
-            const filtered = allAssets.filter(asset => {
-                const s = state.searchText.toLowerCase();
-                const searchMatch = !s || Object.values(asset).some(val => String(val).toLowerCase().includes(s));
-                const statusMatch = state.filterStatus === 'All' || asset.status === state.filterStatus;
-                return searchMatch && statusMatch;
-            });
-            exportToExcel(filtered, `${state.department}_${state.category}_Filtered_${state.filterStatus}.xlsx`);
-        });
+        // Download buttons are hidden
+        // document.getElementById('download-all-btn').addEventListener('click', ...);
+        // document.getElementById('download-current-btn').addEventListener('click', ...);
 
         document.getElementById('login-form').addEventListener('submit', handleLogin);
         document.getElementById('logout-btn').addEventListener('click', handleLogout);
+
+        // --- NEW PASSWORD TOGGLE LISTENER ---
+        document.getElementById('toggle-password').addEventListener('click', (e) => {
+            e.preventDefault(); 
+            const passwordField = document.getElementById('login-password');
+            const eyeIcon = e.currentTarget.querySelector('svg'); 
+
+            if (passwordField.type === 'password') {
+                passwordField.type = 'text';
+                eyeIcon.classList.remove('text-slate-400');
+                eyeIcon.classList.add('text-teal-600'); // Active color
+            } else {
+                passwordField.type = 'password';
+                eyeIcon.classList.add('text-slate-400');
+                eyeIcon.classList.remove('text-teal-600'); // Inactive color
+            }
+        });
+        // --- END NEW LISTENER ---
+
         document.getElementById('back-to-depts').addEventListener('click', () => { state.department = null; navigate('departments-view'); renderDepartments(); });
         document.getElementById('back-to-user-dashboard').addEventListener('click', () => navigate('user-dashboard-view'));
-        document.getElementById('go-to-inventory-btn').addEventListener('click', () => { if (state.department) { renderDepartmentDetail(); navigate('department-detail-view'); } });
-        document.getElementById('back-to-categories').addEventListener('click', () => { state.category = null; navigate('department-detail-view'); renderDepartmentDetail(); });
+        
+        // UPDATED: Inventory button now goes directly to the item list
+        document.getElementById('go-to-inventory-btn').addEventListener('click', () => { 
+            if (state.department) { 
+                state.category = 'Stationary';
+                renderCategoryDetail(); 
+                navigate('category-detail-view'); 
+            } 
+        });
+        
+        // UPDATED: Back button goes to dashboard
+        document.getElementById('back-to-categories').addEventListener('click', () => { 
+            navigate(currentUserRole === 'Admin' ? 'departments-view' : 'user-dashboard-view');
+        });
+        
+        // These are no longer visible, but listeners are kept
         document.getElementById('search-input').addEventListener('input', (e) => { state.searchText = e.target.value; renderCategoryDetail(); });
         document.getElementById('status-filter').addEventListener('change', (e) => { state.filterStatus = e.target.value; renderCategoryDetail(); });
         document.getElementById('action-add-item').addEventListener('click', () => openModal('add'));
+        
         document.getElementById('cancel-modal-btn').addEventListener('click', () => document.getElementById('asset-modal').style.display = 'none');
         document.getElementById('asset-form').addEventListener('submit', handleFormSubmit);
+        
+        // These are no longer visible, but listeners are kept
         document.getElementById('bulk-action-btn').addEventListener('click', () => document.getElementById('bulk-action-dropdown').classList.toggle('hidden'));
         document.getElementById('bulk-status-btn').addEventListener('click', () => openBulkModal('status'));
         document.getElementById('bulk-move-btn').addEventListener('click', () => openBulkModal('move'));
@@ -1426,11 +1550,22 @@
             navigate(currentUserRole === 'Admin' ? 'departments-view' : 'user-dashboard-view');
         });
         document.getElementById('stationary-upload-form').addEventListener('submit', handleStationaryUploadSubmit);
+        
+        // UPDATED: Event listener for both tables
         document.getElementById('stationary-upload-table-body').addEventListener('click', (e) => {
             if (e.target.classList.contains('delete-other-btn')) {
                 handleStationaryUploadDelete(e.target.dataset.id);
             }
         });
+        document.getElementById('stationary-pending-table-body').addEventListener('click', (e) => {
+            if (e.target.classList.contains('stationary-accept-btn')) {
+                handleStationaryRequestAction(e.target.dataset.id, 'Approved');
+            }
+            if (e.target.classList.contains('stationary-reject-btn')) {
+                handleStationaryRequestAction(e.target.dataset.id, 'Rejected');
+            }
+        });
+
 
         // --- INITIAL LOAD ---
         loadData();
